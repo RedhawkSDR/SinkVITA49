@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="ASCII"?>
+<codegen:WaveDevSettings xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:codegen="http://www.redhawk.gov/model/codegen">
+  <implSettings key="cpp">
+    <value outputDir="cpp" template="gov.redhawk.ide.codegen.jet.cplusplus.PullPortDataTemplate" generatorId="gov.redhawk.ide.codegen.jet.cplusplus.CplusplusGenerator" primary="true">
+      <generatedFileCRCs crc="1746641546" file="reconf"/>
+      <generatedFileCRCs crc="4168614009" file="SinkVITA49.h"/>
+      <generatedFileCRCs crc="874182176" file="port_impl.cpp"/>
+      <generatedFileCRCs crc="3438454242" file="build.sh"/>
+      <generatedFileCRCs crc="1020497476" file="configure.ac"/>
+      <generatedFileCRCs crc="33385729" file="port_impl.h"/>
+      <generatedFileCRCs crc="731518902" file="main.cpp"/>
+      <generatedFileCRCs crc="2474185371" file="SinkVITA49.cpp"/>
+      <generatedFileCRCs crc="2063394561" file="SinkVITA49_base.h"/>
+      <generatedFileCRCs crc="100115777" file="struct_props.h"/>
+      <generatedFileCRCs crc="1839354763" file="../SinkVITA49.spec"/>
+      <generatedFileCRCs crc="2114031356" file="SinkVITA49_base.cpp"/>
+      <generatedFileCRCs crc="1821009178" file="Makefile.am"/>
+    </value>
+  </implSettings>
+</codegen:WaveDevSettings>

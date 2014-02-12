@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties PUBLIC "-//JTRS//DTD SCA V2.2.2 PRF//EN" "properties.dtd">
+<properties>
+  <struct id="network_settings" mode="readwrite">
+    <description>Setup the network connection and the packet options.</description>
+    <simple id="network_settings::enable" mode="readwrite" name="enable" type="boolean">
+      <description>Enables the network settings</description>
+      <value>False</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="network_settings::ip_address" mode="readwrite" name="ip_address" type="string">
+      <description>What ip should the SinkVITA49 use? </description>
+      <value>127.0.0.1</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="network_settings::port" mode="readwrite" name="port" type="long">
+      <description>What port should the SinkVITA49 transmit on? </description>
+      <value>12344</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="network_settings::vlan" mode="readwrite" name="vlan" type="ushort">
+      <description>what VLAN should the SinkVITA49 use?</description>
+      <value>0</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="network_settings::use_udp_protocol" mode="readwrite" name="use_udp_protocol" type="boolean">
+      <description>Should the SinkVITA use UDP protocol for packets? If not it will use TCP. Ignored if the IP Address provided is a multicast ip.</description>
+      <value>True</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="network_settings::interface" mode="readwrite" name="interface" type="string">
+      <description>Which Ethernet device should the component use.</description>
+      <value>eth0</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <configurationkind kindtype="configure"/>
+  </struct>
+  <struct id="VITA49Encapsulation" mode="readwrite">
+    <description>Optional setting for the VITA49 data stream.</description>
+    <simple id="VITA49Encapsulation::use_crc" mode="readwrite" name="use_crc" type="boolean">
+      <description>Should the optional VRL framing have the CRC included?</description>
+      <value>True</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="VITA49Encapsulation::use_vrl_frames" mode="readwrite" name="use_vrl_frames" type="boolean">
+      <description>Should the packets (IFData, IFContext, Extended Data, Extended Context) be framed with VRL frames?</description>
+      <value>True</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <configurationkind kindtype="configure"/>
+  </struct>
+  <struct id="VITA49IFDataPacket" mode="readwrite">
+    <description>Describes the VITA49 IF Data Packet - see section 6 Data Packet Classes and Streams
+</description>
+    <simple id="VITA49IFDataPacket::enable" mode="readwrite" name="enable" type="boolean">
+      <description>Use the properites to over ride any IDL settings</description>
+      <value>False</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="VITA49IFDataPacket::enable_stream_identifier" name="enable_stream_identifier" type="boolean">
+      <description>Should the IF Context Packet include a stream identifier? See section 6.1.2 The Stream Identifier
+</description>
+      <value>True</value>
+    </simple>
+    <simple id="VITA49IFDataPacket::enable_class_identifier" mode="readwrite" name="enable_class_identifier" type="boolean">
+      <description>Should the Data Packet have a class id. if so it will follow the recommend format. See section 6.1.3 The Class Identifier.</description>
+      <value>True</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="VITA49IFDataPacket::embed_time_stamp" mode="readwrite" name="embed_time_stamp" type="boolean">
+      <description>Should the Packet include the TimeTag? See section 6.1.4 The Integer-Seconds Timestamp.</description>
+      <value>True</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="VITA49IFDataPacket::use_trailer" mode="readwrite" name="use_trailer" type="boolean">
+      <description>Include optional IF Data packet trailer? See section 6.1.7 The Trailer.</description>
+      <value>True</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <configurationkind kindtype="configure"/>
+  </struct>
+  <struct id="VITA49IFContextPacket" mode="readwrite">
+    <description>Describes the VITA49 IF Context Packet - see section 7 Context Packet Classes and Streams
+</description>
+    <simple id="VITA49IFContextPacket::enable" mode="readwrite" name="enable" type="boolean">
+      <description>Use the properites to over ride any IDL settings</description>
+      <value>False</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="VITA49IFContextPacket::enable_stream_identifier" name="enable_stream_identifier" type="boolean">
+      <description>Should the IF Context Packet include a Stream Identifier? See section 7.1.2 The Stream Identifier.</description>
+      <value>True</value>
+    </simple>
+    <simple id="VITA49IFContextPacket::enable_class_identifier" mode="readwrite" name="enable_class_identifier" type="boolean">
+      <description>Will the context packet contain a class identifier?</description>
+      <value>True</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="VITA49IFContextPacket::class_identifier" mode="readwrite" name="class_identifier" type="string">
+      <description>What class ID should the Context Packet use? Leaving the value to default will cause the Class Identifier to be generated using the payload format. See section 7.1.3 The Class Identifier.</description>
+      <value>DEFAULT</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="VITA49IFContextPacket::embed_time_stamp" mode="readwrite" name="embed_time_stamp" type="boolean">
+      <description>Should the Packet include the TimeTag. See section 7.1.4 The Timestamp Fields.</description>
+      <value>True</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="VITA49IFContextPacket::enable_device_identifier" mode="readwrite" name="enable_device_identifier" type="boolean">
+      <description>Will the context packet contain a device identifier?</description>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="VITA49IFContextPacket::device_identifier" mode="readwrite" name="device_identifier" type="string">
+      <description>Manufacturer's Identifier. For REDHAWK we are using FF-FF-F9:1301. See section 7.1.5.16 The Device Identifier Field.
+</description>
+      <value>FF-FF-FA:1301</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="VITA49IFContextPacket::use_trailer" mode="readwrite" name="use_trailer" type="boolean">
+      <description>Optional Context Packet Trailer</description>
+      <value>True</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <configurationkind kindtype="configure"/>
+  </struct>
+  <struct id="advanced_configuration" mode="readwrite">
+    <description>Advanced configuration options for the SinkVITA49. </description>
+    <simple id="advanced_configuration::max_payload_size" mode="readwrite" name="max_payload_size" type="long">
+      <description>Specifies the maximum payload size in bytes (65504 bytes for a UDP payload minus the required stream identifier for VITA49). With a default MTU of 1500 and the default settings for a IFDatapacket the max_payload_size is 1452.</description>
+      <value>1452</value>
+      <units>bytes</units>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="advanced_configuration::endian_representation" mode="readwrite" name="endian_representation" type="long">
+      <description>Will the packet's payload be sent in BIG_ENDIAN representation or LITTLE_ENDIAN representation. Default is NATIVE</description>
+      <value>0</value>
+      <enumerations>
+        <enumeration label="NATIVE" value="0"/>
+        <enumeration label="LITTLE_ENDIAN" value="1"/>
+        <enumeration label="BIG_ENDIAN" value="2"/>
+      </enumerations>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="advanced_configuration::number_of_buffers" mode="readwrite" name="number_of_buffers" type="ulong">
+      <description>Number of Buffers created for VRT packets</description>
+      <value>10</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="advanced_configuration::use_bulkio_sri" mode="readwrite" name="use_bulkio_sri" type="boolean">
+      <description>If set to true the follow on device will ignore the sample rate, stream id and mode being set in the context packet and use the values sent in the SRI from the SINK.</description>
+      <value>false</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="advanced_configuration::time_between_context_packets" mode="readwrite" name="time_between_context_packets" type="long">
+      <description>The is the amount of time that should occurn between context packets. Once this expires, a context packet is sent.</description>
+      <value>1</value>
+      <units>seconds</units>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="advanced_configuration::number_of_packets_in_burst" mode="readwrite" name="number_of_packets_in_burst" type="long">
+      <description>Number of packets to be sent before the throttle time is executed</description>
+      <value>0</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <simple id="advanced_configuration::throttle_time_between_packet_bursts" mode="readwrite" name="throttle_time_between_packet_bursts" type="long">
+      <description>Due to the pushPacket being larger then the VITA49 packet payload size packets may appear in bursts. This sets the number of microseconds between VITA49 transmitted packets. Default is 0. </description>
+      <value>0</value>
+      <units>microseconds</units>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
+    <configurationkind kindtype="configure"/>
+  </struct>
+  <struct id="connection_status" mode="readonly">
+    <simple id="connection_status::packet_size" name="packet_size" type="long">
+      <description>Returned value in bytes of the complete UDP packet. (This cannot exceed 65535 bytes)</description>
+      <units>bytes</units>
+    </simple>
+    <configurationkind kindtype="configure"/>
+  </struct>
+</properties>
