@@ -27,20 +27,20 @@
 #define SINKVITA49_H
 
 #include "SinkVITA49_base.h"
-#include "VRTObject.h"
-#include "BasicVRLFrame.h"
-#include "BasicVRTPacket.h"
-#include "StandardDataPacket.h"
-#include "BasicDataPacket.h"
-#include "BasicContextPacket.h"
+#include <VRTObject.h>
+#include <BasicVRLFrame.h>
+#include <BasicVRTPacket.h>
+#include <StandardDataPacket.h>
+#include <BasicDataPacket.h>
+#include <BasicContextPacket.h>
 #include <boost/functional/hash.hpp>
-#include "BULKIO_dataVITA49_Out_implemented.h"
 #include "multicast.h"
 #include "unicast.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/asio.hpp>
 #include "VITA49_struct_keywords.h"
+#include "ossie/prop_helpers.h"
 
 struct VITA49Settings{
 	VITA49Encapsulation_struct Encap;
@@ -56,8 +56,16 @@ public:
 	SinkVITA49_i(const char *uuid, const char *label);
 	void __constructor__();
 	~SinkVITA49_i();
-	void configure(const CF::Properties&) throw (CORBA::SystemException, CF::PropertySet::InvalidConfiguration, CF::PropertySet::PartialConfiguration);
+        
+    // Property change listeners
+    void networkSettingsChanged(const network_settings_struct* oldVal, const network_settings_struct* newVal);
+    void vita49EncapsulationChanged(const VITA49Encapsulation_struct* oldVal, const VITA49Encapsulation_struct* newVal);
+    void vita49IFDataPacketChanged(const VITA49IFDataPacket_struct* oldVal, const VITA49IFDataPacket_struct* newVal);
+    void vita49IFContextPacketChanged(const VITA49IFContextPacket_struct *oldVal, const VITA49IFContextPacket_struct *newVal);
+    void advancedConfigurationChanged(const advanced_configuration_struct *oldVal, const advanced_configuration_struct *newVal);
+        
 	int serviceFunction();
+	void stop() throw (CF::Resource::StopError, CORBA::SystemException);
 	template <class IN> bool singleService(IN *dataIn, bool value);
 	void TRANSMITTER();
 	void TRANSMITTER_M();
@@ -66,23 +74,34 @@ public:
 	void setDefaultSRI();
 	int createPayload(int, bool);
 	void createPacket(vrt::BasicDataPacket* pkt, TimeStamp T, int index);
-	//int createIFContextPacket(vrt::BasicContextPacket* pkt, vrt::TimeStamp ts);
 	int createIFContextPacket(BULKIO::PrecisionUTCTime t, int index);
-	void stop() throw (CF::Resource::StopError, CORBA::SystemException);
+
+protected:
+    bool readyToProcessPacket(const std::string incomingStreamId);
+    void setupOutputStream(const std::string streamID, int sampleSize, bool signedPort);
+    void tearDownOutputStream();
+    bool hasActiveOutputStream();
+    int numberOutputConnections();
+    void resetCurrAttach();
+    void resetStreamMap();
+    void resetStreamDefinition();
+    void resetVITAProcess();
+
 private:
-	//BULKIO_dataVITA49_Out_implemented *dataVITA49_out;
 	void initialize_values();
 	void memoryManagement(int maxPacketLength);
 	void createIFContextHeader();
 	void initstreamDef(int sampleSize, bool signedPort);
-	void timerThread();
-	std::string standardPacketClassID;
+    void updateStreamDef();
+    void updateCurrAttach();
+    void timerThread();
+
+    std::string standardPacketClassID;
 	std::string streamID;
 	TimeStamp nextTimeStamp;
 	BULKIO::VITA49StreamDefinition _streamDef;
 	boost::thread* _transmitThread;
 	boost::thread* _contextThread;
-	//boost::thread* _timerThread;
 	boost::asio::io_service io;
 	boost::asio::deadline_timer *t;
 	bool timer_valid;
@@ -111,17 +130,14 @@ private:
 	//std::map<std::string, unsigned int> _streamMap;
 	std::map<std::string, std::string>  _attachMap;
 
-	int vlan;
-	std::string ipAddress;
-	std::string eth_dev;
-	int port;
-	bool use_udp_protocol;
+
 	bool multicast;
 	unsigned long lowMulti;
 	unsigned long highMulti;
 
 	VITA49Settings VITAProcess;
 	bool waitingForSRI;
+    bool shouldUpdateStream;
 
 	omni_mutex dataAvailableMutex;
 	omni_condition* dataAvailableSignal;
@@ -141,24 +157,10 @@ private:
 	bool convertEndian;
 
 	BULKIO::StreamSRI currSRI;
-	void printSRI(BULKIO::StreamSRI *sri, std::string strHeader = "DEBUG SRI"){
-		std::cout << strHeader << ":\n";
-		std::cout << "\thversion: " << sri->hversion<< std::endl;
-		std::cout << "\txstart: " << sri->xstart<< std::endl;
-		std::cout << "\txdelta: " << sri->xdelta<< std::endl;
-		std::cout << "\txunits: " << sri->xunits<< std::endl;
-		std::cout << "\tsubsize: " <<sri->subsize<< std::endl;
-		std::cout << "\tystart: " << sri->ystart<< std::endl;
-		std::cout << "\tydelta: " << sri->ydelta<< std::endl;
-		std::cout << "\tyunits: " << sri->yunits<< std::endl;
-		std::cout << "\tmode: " << sri->mode<< std::endl;
-		std::cout << "\tstreamID: " << sri->streamID<< std::endl;
-		for (size_t i = 0; i < sri->keywords.length(); i++) {
-			std::cout << "\t KEYWORD KEY/VAL :: " << sri->keywords[i].id << ": " << ossie::any_to_string(sri->keywords[i].value) << std::endl;
-		}
-		std::cout << std::endl;
-	}
-	template <typename CORBAXX>
+	
+    void printSRI(BULKIO::StreamSRI *sri, std::string strHeader = "DEBUG SRI");
+	
+    template <typename CORBAXX>
 		bool addModifyKeyword(BULKIO::StreamSRI *sri, CORBA::String_member id, CORBAXX myValue, bool addOnly = false) {
 			CORBA::Any value;
 			value <<= myValue;
@@ -183,29 +185,43 @@ private:
 	int contextCount;
 	int samplesPerPacket;
 	TimeStamp calcNextTimeStamp (BULKIO::PrecisionUTCTime T_v, double xdelta, int dataIndex_v){
-		BULKIO::PrecisionUTCTime ts = T_v;
-		TimeStamp curr;
+		
+        BULKIO::PrecisionUTCTime ts;
+        TimeStamp curr;
+		double timeToOffset = dataIndex_v*xdelta;
+        ts.twsec = floor(timeToOffset);
+        ts.tfsec = timeToOffset-ts.twsec;
 
-		double time = dataIndex_v*xdelta;
-		//std::cout << dataIndex << std::endl;
-		//std::cout << time << std::endl;
-		//std::cout << ts.twsec << std::endl;
-		//std::cout << ts.tfsec << std::endl;
-		if (dataIndex < 0){
-			if (abs(dataIndex) > abs(ts.tfsec)){
-				ts.twsec -= 1.0;
-				ts.tfsec = (1.0+ts.tfsec) + time;
-			}else{
-				ts.tfsec -= time;
-			}
-		}else{
-			ts.tfsec += time;
-			if (ts.tfsec >= 1.0){
-				ts.twsec += floor(ts.tfsec);
-				ts.tfsec = ts.tfsec-floor(ts.tfsec);
-			}
-		}
-		curr = TimeStamp(IntegerMode_UTC, ts.twsec, ts.tfsec*1.0e12);
+        // Apply offset to timestamp
+        ts.twsec += T_v.twsec;
+        ts.tfsec += T_v.tfsec;
+
+        // Adjust for any positive offset remainder
+        if (ts.tfsec >= 1.0) {
+            double wholeSecs = floor(ts.tfsec);
+            ts.twsec += wholeSecs;
+            ts.tfsec -= wholeSecs;    
+        }
+        // Adjust for any negative offset remainder
+        if (ts.tfsec < 0.0) {
+            double wholeSecs = floor(abs(ts.tfsec));
+            double fracSecs = abs(ts.tfsec) - wholeSecs;
+            
+            if (fracSecs > T_v.tfsec) {
+                ts.twsec -= wholeSecs;
+                ts.tfsec -= (wholeSecs + fracSecs);
+            } else {
+                ts.twsec -= (wholeSecs + 1);
+                ts.tfsec -= (wholeSecs - fracSecs);
+            }
+        }
+        
+        if (ts.tfsec < 0) {
+            std::cout << "TODO: WHY IS TFSEC LESS THAN 0 HERE???" << std::endl;
+            ts.tfsec = 0;
+        }
+
+        curr = TimeStamp(IntegerMode_UTC, ts.twsec, ts.tfsec*1.0e12);
 		return curr;
 	}
 
@@ -228,6 +244,22 @@ private:
 	int streamIDoffset;
 	int vita49_payload_size;
 	long burstPacketCount;
+	bool sendAttach;
+
+	void printStreamDef( const BULKIO::VITA49StreamDefinition& streamDef);
+
+	struct attachment {
+			bool manual_override;
+			bool attach;
+			std::string eth_dev;
+			std::string ip_address;
+			int port;
+			int vlan;
+			bool use_udp_protocol;
+			string attach_id;
+		};
+
+	attachment curr_attach;
 };
 
 

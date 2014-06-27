@@ -23,10 +23,13 @@ if [ "$1" = "rpm" ]; then
     if [ -e SinkVITA49.spec ]; then
         mydir=`dirname $0`
         tmpdir=`mktemp -d`
-        cp -r ${mydir} ${tmpdir}/SinkVITA49-1.0.0rel0
-        tar czf ${tmpdir}/SinkVITA49-1.0.0rel0.tar.gz --exclude=".svn" -C ${tmpdir} SinkVITA49-1.0.0rel0
-        rpmbuild -ta ${tmpdir}/SinkVITA49-1.0.0rel0.tar.gz
-        rm -rf $tmpdir
+        cp -r ${mydir} ${tmpdir}/SinkVITA49-2.0.0dev0
+	echo "1"
+        tar czf ${tmpdir}/SinkVITA49-2.0.0dev0.tar.gz --exclude=".svn" -C ${tmpdir} SinkVITA49-2.0.0dev0
+	echo "2"        
+	rpmbuild -ta ${tmpdir}/SinkVITA49-2.0.0dev0.tar.gz
+        echo "3"
+	rm -rf $tmpdir
     else
         echo "Missing RPM spec file in" `pwd`
         exit 1

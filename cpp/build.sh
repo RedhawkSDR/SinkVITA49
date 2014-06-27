@@ -26,6 +26,6 @@ else
     ./reconf
     ./configure
   fi
-  make
+  make -j
   exit 0
 fi

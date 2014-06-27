@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE softpkg PUBLIC "-//JTRS//DTD SCA V2.2.2 SPD//EN" "softpkg.dtd">
-<softpkg id="DCE:325fef4e-7a04-465a-a2c7-02f29eb94d66" name="SinkVITA49" type="sca_compliant" version="1.0.0rel0">
+<softpkg id="DCE:325fef4e-7a04-465a-a2c7-02f29eb94d66" name="SinkVITA49" type="sca_compliant" version="1.1.0dev0">
   <title></title>
   <author>
     <name>null</name>
@@ -14,11 +14,11 @@ The Keywords for generating context packets are documented in the attached readm
   <descriptor>
     <localfile name="SinkVITA49.scd.xml"/>
   </descriptor>
-  <implementation id="cpp_i686">
+   <implementation id="cpp">
     <description>The implementation contains descriptive information about the template for a software component.</description>
     <code type="Executable">
-      <localfile name="cpp_i686/SinkVITA49"/>
-      <entrypoint>cpp_i686/SinkVITA49</entrypoint>
+      <localfile name="cpp"/>
+      <entrypoint>cpp/SinkVITA49</entrypoint>
     </code>
     <compiler name="/usr/bin/gcc" version="4.1.2"/>
     <programminglanguage name="C++"/>
@@ -26,28 +26,10 @@ The Keywords for generating context packets are documented in the attached readm
     <os name="Linux"/>
     <dependency type="runtime_requirements">
       <softpkgref>
-        <localfile name="/sharedPkgs/libVITA49/libVITA49.spd.xml"/>
-        <implref refid="default_impl_i686"/>
+        <localfile name="/deps/VITA49_v1/VITA49_v1.spd.xml"/>
       </softpkgref>
     </dependency>
     <processor name="x86"/>
-  </implementation>
-  <implementation id="cpp_x86_64">
-    <description>The implementation contains descriptive information about the template for a software component.</description>
-    <code type="Executable">
-      <localfile name="cpp_x86_64/SinkVITA49"/>
-      <entrypoint>cpp_x86_64/SinkVITA49</entrypoint>
-    </code>
-    <compiler name="/usr/bin/gcc" version="4.1.2"/>
-    <programminglanguage name="C++"/>
-    <humanlanguage name="EN"/>
-    <os name="Linux"/>
-    <dependency type="runtime_requirements">
-      <softpkgref>
-        <localfile name="/sharedPkgs/libVITA49/libVITA49.spd.xml"/>
-        <implref refid="default_impl_x86_64"/>
-      </softpkgref>
-    </dependency>
     <processor name="x86_64"/>
   </implementation>
 </softpkg>

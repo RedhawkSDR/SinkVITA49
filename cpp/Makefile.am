@@ -18,7 +18,10 @@
 # along with this program.  If not, see http://www.gnu.org/licenses/.
 #
 ossieName = SinkVITA49
-bindir = $(prefix)/dom/components/SinkVITA49/cpp_${ARCH}/
+#unsupported arch in the IDE
+#bindir = $(prefix)/dom/components/SinkVITA49/cpp_${ARCH}/
+bindir = $(prefix)/dom/components/SinkVITA49/cpp/
+
 bin_PROGRAMS = SinkVITA49
 
 xmldir = $(prefix)/dom/components/SinkVITA49/
@@ -42,6 +45,6 @@ distclean-local:
 # you wish to manually control these options.
 include $(srcdir)/Makefile.am.ide
 SinkVITA49_SOURCES = $(redhawk_SOURCES_auto)
+SinkVITA49_LDADD = $(PROJECTDEPS_LIBS) $(BOOST_LDFLAGS) $(BOOST_THREAD_LIB) $(BOOST_REGEX_LIB) $(BOOST_SYSTEM_LIB) $(INTERFACEDEPS_LIBS) $(redhawk_LDADD_auto)
 SinkVITA49_CXXFLAGS = -Wall $(PROJECTDEPS_CFLAGS) $(BOOST_CPPFLAGS) $(INTERFACEDEPS_CFLAGS) $(redhawk_INCLUDES_auto)
-SinkVITA49_LDADD = $(PROJECTDEPS_LIBS) $(BOOST_LDFLAGS) $(BOOST_THREAD_LIB) $(INTERFACEDEPS_LIBS) $(redhawk_LDADD_auto)
 SinkVITA49_LDFLAGS = -Wall $(redhawk_LDFLAGS_auto)

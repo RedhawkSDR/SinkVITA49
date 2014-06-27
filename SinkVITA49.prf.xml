@@ -3,12 +3,6 @@
 <properties>
   <struct id="network_settings" mode="readwrite">
     <description>Setup the network connection and the packet options.</description>
-    <simple id="network_settings::enable" mode="readwrite" name="enable" type="boolean">
-      <description>Enables the network settings</description>
-      <value>False</value>
-      <kind kindtype="configure"/>
-      <action type="external"/>
-    </simple>
     <simple id="network_settings::ip_address" mode="readwrite" name="ip_address" type="string">
       <description>What ip should the SinkVITA49 use? </description>
       <value>127.0.0.1</value>
@@ -43,13 +37,13 @@
   </struct>
   <struct id="VITA49Encapsulation" mode="readwrite">
     <description>Optional setting for the VITA49 data stream.</description>
-    <simple id="VITA49Encapsulation::use_crc" mode="readwrite" name="use_crc" type="boolean">
+    <simple id="VITA49Encapsulation::enable_crc" mode="readwrite" name="enable_crc" type="boolean">
       <description>Should the optional VRL framing have the CRC included?</description>
-      <value>True</value>
+      <value>False</value>
       <kind kindtype="configure"/>
       <action type="external"/>
     </simple>
-    <simple id="VITA49Encapsulation::use_vrl_frames" mode="readwrite" name="use_vrl_frames" type="boolean">
+    <simple id="VITA49Encapsulation::enable_vrl_frames" mode="readwrite" name="enable_vrl_frames" type="boolean">
       <description>Should the packets (IFData, IFContext, Extended Data, Extended Context) be framed with VRL frames?</description>
       <value>True</value>
       <kind kindtype="configure"/>
@@ -61,13 +55,13 @@
     <description>Describes the VITA49 IF Data Packet - see section 6 Data Packet Classes and Streams
 </description>
     <simple id="VITA49IFDataPacket::enable" mode="readwrite" name="enable" type="boolean">
-      <description>Use the properites to over ride any IDL settings</description>
-      <value>False</value>
+      <description>Use of this flags causes the SINKVITA49 to create IFDataPackets</description>
+      <value>True</value>
       <kind kindtype="configure"/>
       <action type="external"/>
     </simple>
     <simple id="VITA49IFDataPacket::enable_stream_identifier" name="enable_stream_identifier" type="boolean">
-      <description>Should the IF Context Packet include a stream identifier? See section 6.1.2 The Stream Identifier
+      <description>Should the IF Data Packet include a stream identifier? See section 6.1.2 The Stream Identifier
 </description>
       <value>True</value>
     </simple>
@@ -83,7 +77,7 @@
       <kind kindtype="configure"/>
       <action type="external"/>
     </simple>
-    <simple id="VITA49IFDataPacket::use_trailer" mode="readwrite" name="use_trailer" type="boolean">
+    <simple id="VITA49IFDataPacket::enable_trailer" mode="readwrite" name="enable_trailer" type="boolean">
       <description>Include optional IF Data packet trailer? See section 6.1.7 The Trailer.</description>
       <value>True</value>
       <kind kindtype="configure"/>
@@ -95,14 +89,20 @@
     <description>Describes the VITA49 IF Context Packet - see section 7 Context Packet Classes and Streams
 </description>
     <simple id="VITA49IFContextPacket::enable" mode="readwrite" name="enable" type="boolean">
-      <description>Use the properites to over ride any IDL settings</description>
-      <value>False</value>
+      <description>Use of this flags causes the SINKVITA49 to create IFContextPackets</description>
+      <value>True</value>
       <kind kindtype="configure"/>
       <action type="external"/>
     </simple>
     <simple id="VITA49IFContextPacket::enable_stream_identifier" name="enable_stream_identifier" type="boolean">
       <description>Should the IF Context Packet include a Stream Identifier? See section 7.1.2 The Stream Identifier.</description>
       <value>True</value>
+    </simple>
+    <simple id="VITA49IFContextPacket::stream_identifier_offset" mode="readwrite" name="stream_identifier_offset" type="long">
+      <description>See section 6.1.2.2 the stream identifier of  the context packet may have an offset from that of the stream identifier of the data stream </description>
+      <value>0</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
     </simple>
     <simple id="VITA49IFContextPacket::enable_class_identifier" mode="readwrite" name="enable_class_identifier" type="boolean">
       <description>Will the context packet contain a class identifier?</description>
@@ -111,7 +111,9 @@
       <action type="external"/>
     </simple>
     <simple id="VITA49IFContextPacket::class_identifier" mode="readwrite" name="class_identifier" type="string">
-      <description>What class ID should the Context Packet use? Leaving the value to default will cause the Class Identifier to be generated using the payload format. See section 7.1.3 The Class Identifier.</description>
+      <description>What class ID should the Context Packet use? 
+Leaving the value to &quot;DEFAULT&quot; will cause the Class Identifier to be generated using the 
+payload format. See section 7.1.3 The Class Identifier.</description>
       <value>DEFAULT</value>
       <kind kindtype="configure"/>
       <action type="external"/>
@@ -124,6 +126,7 @@
     </simple>
     <simple id="VITA49IFContextPacket::enable_device_identifier" mode="readwrite" name="enable_device_identifier" type="boolean">
       <description>Will the context packet contain a device identifier?</description>
+      <value>True</value>
       <kind kindtype="configure"/>
       <action type="external"/>
     </simple>
@@ -134,7 +137,7 @@
       <kind kindtype="configure"/>
       <action type="external"/>
     </simple>
-    <simple id="VITA49IFContextPacket::use_trailer" mode="readwrite" name="use_trailer" type="boolean">
+    <simple id="VITA49IFContextPacket::use_trailer" mode="readwrite" name="enable_trailer" type="boolean">
       <description>Optional Context Packet Trailer</description>
       <value>True</value>
       <kind kindtype="configure"/>
@@ -144,6 +147,12 @@
   </struct>
   <struct id="advanced_configuration" mode="readwrite">
     <description>Advanced configuration options for the SinkVITA49. </description>
+    <simple id="advanced_configuration::force_transmit" mode="readwrite" name="force_transmit" type="boolean">
+      <description>If there are not active output connections on the dataVITA49_out port setting this to true will force the SinkVITA49 to transmit data.</description>
+      <value>False</value>
+      <kind kindtype="configure"/>
+      <action type="external"/>
+    </simple>
     <simple id="advanced_configuration::max_payload_size" mode="readwrite" name="max_payload_size" type="long">
       <description>Specifies the maximum payload size in bytes (65504 bytes for a UDP payload minus the required stream identifier for VITA49). With a default MTU of 1500 and the default settings for a IFDatapacket the max_payload_size is 1452.</description>
       <value>1452</value>
@@ -183,13 +192,13 @@
     </simple>
     <simple id="advanced_configuration::number_of_packets_in_burst" mode="readwrite" name="number_of_packets_in_burst" type="long">
       <description>Number of packets to be sent before the throttle time is executed</description>
-      <value>0</value>
+      <value>150</value>
       <kind kindtype="configure"/>
       <action type="external"/>
     </simple>
     <simple id="advanced_configuration::throttle_time_between_packet_bursts" mode="readwrite" name="throttle_time_between_packet_bursts" type="long">
       <description>Due to the pushPacket being larger then the VITA49 packet payload size packets may appear in bursts. This sets the number of microseconds between VITA49 transmitted packets. Default is 0. </description>
-      <value>0</value>
+      <value>100</value>
       <units>microseconds</units>
       <kind kindtype="configure"/>
       <action type="external"/>

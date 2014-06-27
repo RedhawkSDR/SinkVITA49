@@ -1,1 +1,15 @@
+*~
 Makefile
+cpp/.deps/
+cpp/Makefile.in
+cpp/SinkVITA49
+cpp/configure
+cpp/depcomp
+cpp/install-sh
+cpp/ltmain.sh
+cpp/missing
+cpp/*.o
+cpp/*.m4
+cpp/config.*
+cpp/*.cache
+cpp/nbproject
