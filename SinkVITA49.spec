@@ -32,7 +32,7 @@ Prefix:         %{_prefix}
 Name: SinkVITA49
 Summary: Component %{name}
 Version: 2.0.0
-Release: 1%{?dist}
+Release: 9%{?dist}
 
 Group: REDHAWK/Components
 License: LGPLv3+
