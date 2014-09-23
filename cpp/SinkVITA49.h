@@ -36,6 +36,7 @@
 #include <boost/functional/hash.hpp>
 #include "multicast.h"
 #include "unicast.h"
+#include "boost_tcp_server.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/asio.hpp>
@@ -65,6 +66,7 @@ public:
     void advancedConfigurationChanged(const advanced_configuration_struct *oldVal, const advanced_configuration_struct *newVal);
         
 	int serviceFunction();
+	void start() throw (CF::Resource::StartError, CORBA::SystemException);
 	void stop() throw (CF::Resource::StopError, CORBA::SystemException);
 	template <class IN> bool singleService(IN *dataIn, bool value);
 	void TRANSMITTER();
@@ -106,6 +108,7 @@ private:
 	boost::asio::deadline_timer *t;
 	bool timer_valid;
 	boost::mutex running_lock;
+	boost::mutex startstop_lock;
 	boost::mutex property_lock;
 	boost::mutex sriLock;
 	bool launch_tx_thread();
@@ -116,7 +119,7 @@ private:
 	bool remainingData;
 	uint8_t* remainingSamples;
 	int remainingSize;
-	multicast_t server;
+	multicast_t multi_server;
 	unicast_t uni_server;
 	long timeOut;
 	PayloadFormat *pf;
@@ -260,6 +263,12 @@ private:
 		};
 
 	attachment curr_attach;
+
+	bool unicast_udp_open;
+	bool unicast_tcp_open;
+	bool multicast_udp_open;
+
+	server *tcpServer;
 };
 
 

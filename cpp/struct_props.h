@@ -17,6 +17,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/.
  */
+
 #ifndef STRUCTPROPS_H
 #define STRUCTPROPS_H
 
@@ -31,6 +32,7 @@
 struct network_settings_struct {
     network_settings_struct ()
     {
+        enable = false;
         ip_address = "127.0.0.1";
         port = 12344;
         vlan = 0;
@@ -42,6 +44,7 @@ struct network_settings_struct {
         return std::string("network_settings");
     };
 
+    bool enable;
     std::string ip_address;
     CORBA::Long port;
     unsigned short vlan;
@@ -54,7 +57,10 @@ inline bool operator>>= (const CORBA::Any& a, network_settings_struct& s) {
     if (!(a >>= temp)) return false;
     CF::Properties& props = *temp;
     for (unsigned int idx = 0; idx < props.length(); idx++) {
-        if (!strcmp("network_settings::ip_address", props[idx].id)) {
+        if (!strcmp("network_settings::enable", props[idx].id)) {
+            if (!(props[idx].value >>= s.enable)) return false;
+        }
+        else if (!strcmp("network_settings::ip_address", props[idx].id)) {
             if (!(props[idx].value >>= s.ip_address)) return false;
         }
         else if (!strcmp("network_settings::port", props[idx].id)) {
@@ -75,21 +81,25 @@ inline bool operator>>= (const CORBA::Any& a, network_settings_struct& s) {
 
 inline void operator<<= (CORBA::Any& a, const network_settings_struct& s) {
     CF::Properties props;
-    props.length(5);
-    props[0].id = CORBA::string_dup("network_settings::ip_address");
-    props[0].value <<= s.ip_address;
-    props[1].id = CORBA::string_dup("network_settings::port");
-    props[1].value <<= s.port;
-    props[2].id = CORBA::string_dup("network_settings::vlan");
-    props[2].value <<= s.vlan;
-    props[3].id = CORBA::string_dup("network_settings::use_udp_protocol");
-    props[3].value <<= s.use_udp_protocol;
-    props[4].id = CORBA::string_dup("network_settings::interface");
-    props[4].value <<= s.interface;
+    props.length(6);
+    props[0].id = CORBA::string_dup("network_settings::enable");
+    props[0].value <<= s.enable;
+    props[1].id = CORBA::string_dup("network_settings::ip_address");
+    props[1].value <<= s.ip_address;
+    props[2].id = CORBA::string_dup("network_settings::port");
+    props[2].value <<= s.port;
+    props[3].id = CORBA::string_dup("network_settings::vlan");
+    props[3].value <<= s.vlan;
+    props[4].id = CORBA::string_dup("network_settings::use_udp_protocol");
+    props[4].value <<= s.use_udp_protocol;
+    props[5].id = CORBA::string_dup("network_settings::interface");
+    props[5].value <<= s.interface;
     a <<= props;
 };
 
 inline bool operator== (const network_settings_struct& s1, const network_settings_struct& s2) {
+    if (s1.enable!=s2.enable)
+        return false;
     if (s1.ip_address!=s2.ip_address)
         return false;
     if (s1.port!=s2.port)

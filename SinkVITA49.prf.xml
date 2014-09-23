@@ -22,6 +22,10 @@ with this program.  If not, see http://www.gnu.org/licenses/.
 <properties>
   <struct id="network_settings" mode="readwrite">
     <description>Setup the network connection and the packet options.</description>
+    <simple id="network_settings::enable" name="enable" type="boolean">
+      <description>Enable the network settings.</description>
+      <value>False</value>
+    </simple>
     <simple id="network_settings::ip_address" mode="readwrite" name="ip_address" type="string">
       <description>What ip should the SinkVITA49 use? </description>
       <value>127.0.0.1</value>

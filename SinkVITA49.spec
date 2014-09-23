@@ -29,35 +29,34 @@ Prefix:         %{_prefix}
 %define _mandir        %{_prefix}/man
 %define _infodir       %{_prefix}/info
 
-Name: SinkVITA49
-Summary: Component %{name}
-Version: 2.0.0
-Release: 10%{?dist}
+Name:           SinkVITA49
+Version:        3.0
+Release:        1%{?dist}
+Summary:        Component %{name}
 
-Group: REDHAWK/Components
-License: LGPLv3+
-Source: %{name}-%{version}.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+Group:          REDHAWK/Components
+License:        LGPLv3+
+Source0:        %{name}-%{version}.tar.gz
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-
-Requires: redhawk >= 1.10
-BuildRequires: redhawk-devel >= 1.10
+BuildRequires:  redhawk-devel >= 1.10
+Requires:       redhawk >= 1.10
 
 # Interface requirements
-Requires: bulkioInterfaces >= 1.10
-BuildRequires: bulkioInterfaces >= 1.10
-
-# C++ requirements
-Requires: redhawk-libVITA49_v1 >= 1.0.0
-BuildRequires: redhawk-libVITA49_v1-devel >= 1.0.0
+BuildRequires:  bulkioInterfaces >= 1.10
+Requires:       bulkioInterfaces >= 1.10
+BuildRequires:	redhawk-libVITA49_v1 >= 1.0.0
+Requires:	redhawk-libVITA49_v1 >= 1.0.0
 
 %description
 The SinkVITA49 REDHAWK component creates a UDP/multicast or TCP VITA49 packet stream and converts the data and SRI Keywords to IF data packets and Context packets for use within/between/outside of a REDHAWK domain application.
 
 The Keywords for generating context packets are documented in the attached readme.txt
 
+
 %prep
 %setup -q
+
 
 %build
 # Implementation cpp
@@ -85,7 +84,8 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,redhawk,redhawk,-)
 %dir %{_prefix}/dom/components/%{name}
-%{_prefix}/dom/components/%{name}/SinkVITA49.spd.xml
-%{_prefix}/dom/components/%{name}/SinkVITA49.prf.xml
 %{_prefix}/dom/components/%{name}/SinkVITA49.scd.xml
+%{_prefix}/dom/components/%{name}/SinkVITA49.prf.xml
+%{_prefix}/dom/components/%{name}/SinkVITA49.spd.xml
 %{_prefix}/dom/components/%{name}/cpp
+

@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see http://www.gnu.org/licenses/.
 #
-if [ "$1" = 'clean' ]; then
+if [ "$1" = "clean" ]; then
   make clean
 else
   # Checks if build is newer than makefile (based on modification time)

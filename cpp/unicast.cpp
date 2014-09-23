@@ -79,7 +79,7 @@ static unicast_t unicast_open_ (const char* iface, const char* group, int port )
 			  struct ifreq dev = devs.ifc_req[ii];
 			  verify(ioctl(unicast.sock, SIOCGIFFLAGS, &dev) >= 0, "get flags");
 			  verify(dev.ifr_flags & IFF_UP, "interface up");
-			  verify(!(dev.ifr_flags & IFF_LOOPBACK), "not loopback");
+			  //verify(!(dev.ifr_flags & IFF_LOOPBACK), "not loopback");
 			  verify(ioctl(unicast.sock, SIOCGIFINDEX, &dev) == 0, "get index");
 			  unicast.addr.sin_family = AF_INET;
 			  unicast.addr.sin_addr.s_addr = inet_addr(group);//mreqn.imr_multiaddr.s_addr;

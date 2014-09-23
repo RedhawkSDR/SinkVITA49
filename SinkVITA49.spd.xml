@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE softpkg PUBLIC "-//JTRS//DTD SCA V2.2.2 SPD//EN" "softpkg.dtd">
 <!--
 This file is protected by Copyright. Please refer to the COPYRIGHT file
 distributed with this source distribution.
@@ -18,8 +19,7 @@ details.
 You should have received a copy of the GNU Lesser General Public License along
 with this program.  If not, see http://www.gnu.org/licenses/.
 -->
-<!DOCTYPE softpkg PUBLIC "-//JTRS//DTD SCA V2.2.2 SPD//EN" "softpkg.dtd">
-<softpkg id="DCE:325fef4e-7a04-465a-a2c7-02f29eb94d66" name="SinkVITA49" type="sca_compliant" version="1.1.0dev0">
+<softpkg id="DCE:325fef4e-7a04-465a-a2c7-02f29eb94d66" name="SinkVITA49" type="sca_compliant" version="3.0">
   <title></title>
   <author>
     <name>null</name>
@@ -33,7 +33,7 @@ The Keywords for generating context packets are documented in the attached readm
   <descriptor>
     <localfile name="SinkVITA49.scd.xml"/>
   </descriptor>
-   <implementation id="cpp">
+  <implementation id="cpp">
     <description>The implementation contains descriptive information about the template for a software component.</description>
     <code type="Executable">
       <localfile name="cpp"/>

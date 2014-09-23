@@ -80,12 +80,17 @@ void SinkVITA49_i::__constructor__() {
     initialize_values();
     standardDPacket = new StandardDataPacket(100);
     
-
     resetCurrAttach();
     resetStreamMap();
     resetStreamDefinition();
     resetVITAProcess();
+
+    unicast_udp_open = false;
+    unicast_tcp_open = false;
+    multicast_udp_open = false;
     
+    tcpServer = NULL;
+
     this->dataVITA49_out->setLogger(this->__logger);
     
     // Setup property change listeners
@@ -215,9 +220,25 @@ void SinkVITA49_i::memoryManagement(int maxPacketLength) {
 
 }
 
+void SinkVITA49_i::start() throw (CF::Resource::StartError, CORBA::SystemException) {
+    boost::mutex::scoped_lock runLock(startstop_lock);
+    SinkVITA49_base::start();
+}
+
 void SinkVITA49_i::stop() throw (CF::Resource::StopError, CORBA::SystemException) {
+    boost::mutex::scoped_lock runLock(startstop_lock);
+
     SinkVITA49_base::stop();
-    close(uni_server.sock);
+    
+    if (unicast_udp_open) {
+        close(uni_server.sock);
+        unicast_udp_open = false;
+    }
+
+    if (unicast_tcp_open) {
+        unicast_tcp_open = false;
+    }
+
     destroy_tx_thread();
 }
 
@@ -235,20 +256,22 @@ void SinkVITA49_i::networkSettingsChanged(const network_settings_struct* oldVal,
                                           const network_settings_struct* newVal) {
     boost::mutex::scoped_lock lock(property_lock);
     if (started()) {
-      if (curr_attach.port != network_settings.port)
+      if (network_settings.enable) {
+        if (curr_attach.port != network_settings.port)
           LOG_INFO(SinkVITA49_i, "*** Received request to use port '"<<network_settings.port<<"' ***")
-      if (curr_attach.eth_dev != network_settings.interface)
+        if (curr_attach.eth_dev != network_settings.interface)
           LOG_INFO(SinkVITA49_i, "*** Received request to use interface '"<<network_settings.interface<<"' ***")
-      if (curr_attach.ip_address != network_settings.ip_address)
+        if (curr_attach.ip_address != network_settings.ip_address)
           LOG_INFO(SinkVITA49_i, "*** Received request to use ip_address '"<<network_settings.ip_address<<"' ***")
-      if (curr_attach.vlan != network_settings.vlan)
+        if (curr_attach.vlan != network_settings.vlan)
           LOG_INFO(SinkVITA49_i, "*** Received request to use vlan '"<<network_settings.vlan<<"' ***")
-      if (curr_attach.use_udp_protocol != network_settings.use_udp_protocol) {
+        if (curr_attach.use_udp_protocol != network_settings.use_udp_protocol) {
           if (network_settings.use_udp_protocol) {
             LOG_INFO(SinkVITA49_i, "*** Received request to enable udp protocol ***")
           } else {
             LOG_INFO(SinkVITA49_i, "*** Received request to disable udp protocol ***")
           }
+      }
       }
     }
     shouldUpdateStream = true;
@@ -326,6 +349,11 @@ void SinkVITA49_i::advancedConfigurationChanged(const advanced_configuration_str
 }
 
 void SinkVITA49_i::destroy_tx_thread() {
+    if (tcpServer) {
+        LOG_DEBUG(SinkVITA49_i, "DESTROYING TCP SERVER");
+        delete tcpServer;
+        tcpServer = NULL;
+    }
     if (_transmitThread != NULL) {
         LOG_DEBUG(SinkVITA49_i, "DESTROYING TX THREAD");
         runThread = false;
@@ -355,35 +383,36 @@ bool SinkVITA49_i::launch_tx_thread() {
         iface << "." << curr_attach.vlan;
     }
 
+    in_addr_t attachedIP = inet_network(curr_attach.ip_address.c_str());
+    const char *attachedIPstr = curr_attach.ip_address.c_str();
+    std::string attachedInterfaceStr = iface.str();
+    const char *attachedInterface = attachedInterfaceStr.c_str();
+
     //check to see if this a multicast address or not
-    if (inet_network(curr_attach.ip_address.c_str()) > lowMulti && inet_network(curr_attach.ip_address.c_str()) < highMulti && !curr_attach.ip_address.empty()) {
-        LOG_DEBUG(SinkVITA49_i, "Enabling multicast_client on " << iface.str().c_str() << " " << curr_attach.ip_address.c_str() << " " << curr_attach.port);
-        server = multicast_server(iface.str().c_str(), curr_attach.ip_address.c_str(), curr_attach.port);
-        if (server.sock < 0) {
-            LOG_ERROR(SinkVITA49_i, "Error: SinkVITA49_impl::RECEIVER() failed to connect to multicast socket");
+    if (attachedIP > lowMulti && attachedIP < highMulti && !curr_attach.ip_address.empty()) {
+        LOG_DEBUG(SinkVITA49_i, "Enabling multicast_client on " << attachedInterface << " " << attachedIPstr << " " << curr_attach.port);
+        multi_server = multicast_server(attachedInterface, attachedIPstr, curr_attach.port);
+        if (multi_server.sock < 0) {
+            LOG_ERROR(SinkVITA49_i, "Error: SinkVITA49_impl::RECEIVER() failed to connect to multicast socket server");
             return false;
         }
+        multicast_udp_open = true;
         multicast = true;
     } else if (!curr_attach.ip_address.empty()) {
         multicast = false;
         if (curr_attach.use_udp_protocol) {
 
-            LOG_DEBUG(SinkVITA49_i, "Enabling unicast_client on " << iface.str().c_str() << " " << curr_attach.ip_address.c_str() << " " << curr_attach.port);
-            uni_server = unicast_server(iface.str().c_str(), curr_attach.ip_address.c_str(), curr_attach.port);
+            LOG_DEBUG(SinkVITA49_i, "Enabling unicast_client on " << attachedInterface << " " << attachedIPstr << " " << curr_attach.port);
+            uni_server = unicast_server(attachedInterface, attachedIPstr, curr_attach.port);
             if (uni_server.sock < 0) {
-                std::cerr << "Error: SinkVITA49::TRANSMITTER() failed to create unicast socket  " << std::endl;
-                LOG_ERROR(SinkVITA49_i, "Error: SinkVITA49::TRANSMITTER() failed to create unicast socket");
+                LOG_ERROR(SinkVITA49_i, "Error: SinkVITA49::TRANSMITTER() failed to create unicast socket server");
                 return false;
             }
+            unicast_udp_open = true;
         } else {
-            LOG_DEBUG(SinkVITA49_i, "TCP is not currently supported - defaulting to UDP " << iface.str().c_str() << " " << curr_attach.ip_address.c_str() << " " << curr_attach.port);
-            uni_server = unicast_server(iface.str().c_str(), curr_attach.ip_address.c_str(), curr_attach.port);
-            if (uni_server.sock < 0) {
-                std::cerr << "Error: SinkVITA49::TRANSMITTER() failed to create unicast socket  " << std::endl;
-                LOG_ERROR(SinkVITA49_i, "Error: SinkVITA49::TRANSMITTER() failed to create unicast socket");
-                return false;
-            }
-
+            tcpServer = new server(curr_attach.port, vita49_payload_size, false);
+            LOG_DEBUG(SinkVITA49_i, "Error: SinkVITA49::TRANSMITTER() failed to create unicast socket");
+            unicast_tcp_open = true;
         }
     }
     runThread = true;
@@ -436,10 +465,10 @@ void SinkVITA49_i::TRANSMITTER_M() {
                     if (VITAProcess.Encap.enable_crc)
                         vrl_frame->updateCRC();
                     vrl_frame->setFrameCount((frameCounter++) & 0xFFF);
-                    multicast_transmit(server, vrl_frame->getFramePointer(), vrl_frame->getFrameLength());
+                    multicast_transmit(multi_server, vrl_frame->getFramePointer(), vrl_frame->getFrameLength());
                     pCount++;
                 } else {
-                    multicast_transmit(server, vrtPacket->getPacketPointer(), vrtPacket->getPacketLength());
+                    multicast_transmit(multi_server, vrtPacket->getPacketPointer(), vrtPacket->getPacketLength());
                     pCount++;
                 }
                 workQueue2.pop();
@@ -458,6 +487,8 @@ void SinkVITA49_i::TRANSMITTER() {
     BasicVRLFrame *vrl_frame = new BasicVRLFrame();
     int frameCounter = 0;
     long pCount = 0;
+    int result;
+
     while (runThread) {
         boost::this_thread::interruption_point();
        
@@ -471,15 +502,29 @@ void SinkVITA49_i::TRANSMITTER() {
                 vrtPacket = workQueue2.front();
                 if (VITAProcess.Encap.enable_vrl_frames) {
                     vrl_frame->setVRTPacket(vrtPacket);
+
                     if (VITAProcess.Encap.enable_crc)
                         vrl_frame->updateCRC();
+
                     vrl_frame->setFrameCount((frameCounter++) & 0xFFF);
-                    unicast_transmit(uni_server, vrl_frame->getFramePointer(), vrl_frame->getFrameLength());
                     
-                    pCount++;
+                    if (unicast_udp_open) {
+                    	result = unicast_transmit(uni_server, vrl_frame->getFramePointer(), vrl_frame->getFrameLength());
+                    	LOG_DEBUG(SinkVITA49_i, "Transmitted UDP data..." << result << strerror(errno));
+                    }
+
+                    if (unicast_tcp_open) {
+                    	tcpServer->write(vrl_frame->getFramePointer(), vrl_frame->getFrameLength());
+                    }
                 } else {
-                    unicast_transmit(uni_server, vrtPacket->getPacketPointer(), vrtPacket->getPacketLength());
-                    pCount++;
+                	if (unicast_udp_open) {
+                		result = unicast_transmit(uni_server, vrtPacket->getPacketPointer(), vrtPacket->getPacketLength());
+                		LOG_DEBUG(SinkVITA49_i, "Transmitted UDP data..." << result << strerror(errno));
+                	}
+
+                	if (unicast_tcp_open) {
+                		tcpServer->write(vrtPacket->getPacketPointer(), vrtPacket->getPacketLength());
+                	}
                 }
                 workQueue2.pop();
             }
