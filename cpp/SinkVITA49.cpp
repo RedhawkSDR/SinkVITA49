@@ -40,6 +40,31 @@ PREPARE_LOGGING(SinkVITA49_i)
 
 using namespace vrt;
 
+// Protocol Field Sizes in bytes
+// VITA49 IF Data and Context
+const int VITA49_HEADER_SIZE = 4;			// Mandatory
+const int VITA49_STREAM_ID_SIZE = 4;		// Optional
+const int VITA49_CLASS_ID_SIZE = 8;			// Optional
+const int VITA49_INT_SECS_SIZE = 4;			// Optional
+const int VITA49_FRAC_SECS_SIZE = 8;		// Optional
+
+// VITA49 IF Data Only
+const int VITA49_TRAILER_SIZE = 4;			// Optional
+
+// VITA49 Context Only
+const int VITA49_CONTEXT_INDEX_SIZE = 4;	// Optional
+
+// VITA49 VRL
+const int VRL_FRAME_SIZE = 12;				// Optional for VRT, Mandatory for VRL  (?)
+const int VRL_CRC_SIZE = 4;					// Optional for VRT, Mandatory for VRL  (?)
+
+// UDP
+const int UDP_HEADER_SIZE = 8;				// Mandatory
+
+// TCP
+const int TCP_HEADER_SIZE = 20;				// Mandatory
+// TCP options has range of 0-40 bytes		// Optional
+
 /************************************************
  * Constructor
  *
@@ -540,10 +565,50 @@ int SinkVITA49_i::createPayload(int size, bool signed_v) {
     try {
         int bytesPerPacket = 0;
         int difference = 0;
-        //UDP HEADER                                  //VITA49 Header
-        bytesPerPacket = vita49_payload_size + (8 + (VITAProcess.Encap.enable_vrl_frames ? 12 : 0)+ (VITAProcess.Encap.enable_crc ? 4 : 0) + 4 + (VITAProcess.IFDPacket.enable_stream_identifier ? 4 : 0) + (VITAProcess.IFDPacket.enable_class_identifier ? 8 : 0) + (VITAProcess.IFDPacket.embed_time_stamp ? 12 : 0) + (VITAProcess.IFDPacket.enable_trailer ? 4 : 0));
-        //MAX IPV4 UDP is 65535
-        //IPV4 header is 20 bytes
+        in_addr_t attachedIP = inet_network(curr_attach.ip_address.c_str());
+
+        // UDP Header
+        if (curr_attach.use_udp_protocol || (attachedIP > lowMulti && attachedIP < highMulti && not curr_attach.ip_address.empty())) {
+        	bytesPerPacket += UDP_HEADER_SIZE;
+        }
+        // TCP Header
+        else {
+        	bytesPerPacket += TCP_HEADER_SIZE;
+        }
+
+        // VRL Frame
+        if (VITAProcess.Encap.enable_vrl_frames) {
+        	bytesPerPacket += VRL_FRAME_SIZE;
+        }
+
+        if (VITAProcess.Encap.enable_crc) {
+        	bytesPerPacket += VRL_CRC_SIZE;
+        }
+
+        // VRT IF Data
+        if (VITAProcess.IFDPacket.enable) {
+        	bytesPerPacket += VITA49_HEADER_SIZE;
+
+        	if (VITAProcess.IFDPacket.enable_stream_identifier) {
+        		bytesPerPacket += VITA49_STREAM_ID_SIZE;
+        	}
+
+        	if (VITAProcess.IFDPacket.enable_class_identifier) {
+        		bytesPerPacket += VITA49_CLASS_ID_SIZE;
+        	}
+
+        	if (VITAProcess.IFDPacket.embed_time_stamp) {
+        		bytesPerPacket += VITA49_INT_SECS_SIZE;
+        		bytesPerPacket += VITA49_FRAC_SECS_SIZE;
+        	}
+
+        	bytesPerPacket += vita49_payload_size;
+
+        	if (VITAProcess.IFDPacket.enable_trailer) {
+        		bytesPerPacket += VITA49_TRAILER_SIZE;
+        	}
+        }
+
         if (bytesPerPacket > 65515) {
             //find the difference
             difference = bytesPerPacket - 65515;
@@ -628,34 +693,37 @@ int SinkVITA49_i::createPayload(int size, bool signed_v) {
 }
 
 void SinkVITA49_i::createPacket(BasicDataPacket* pkt, TimeStamp vrt_ts, int sampleIndex_l) {
-    /* use the vector magic to make this work */
-
-    std::_Vector_base<char, _seqVector::seqVectorAllocator<char> >::_Vector_impl *vectorPointer = (std::_Vector_base<char, _seqVector::seqVectorAllocator<char> >::_Vector_impl *) ((void*) & (standardDPacket->bbuf));
-    vectorPointer->_M_start = const_cast<char*> (&pkt->bbuf[0]);
-    vectorPointer->_M_finish = vectorPointer->_M_start + pkt->bbuf.size();
-    vectorPointer->_M_end_of_storage = vectorPointer->_M_finish;
-
     //std::string streamID = CORBA::string_dup(currSRI.streamID);
     try {
-        if (VITAProcess.IFDPacket.enable_stream_identifier) {
-            //standardDPacket->setStreamIdentifier(_streamMap[streamID]+streamIDoffset);
-            standardDPacket->setStreamIdentifier(_streamMap.hash);
+    	if (VITAProcess.IFDPacket.enable) {
+    		/* use the vector magic to make this work */
+    		std::_Vector_base<char, _seqVector::seqVectorAllocator<char> >::_Vector_impl *vectorPointer = (std::_Vector_base<char, _seqVector::seqVectorAllocator<char> >::_Vector_impl *) ((void*) & (standardDPacket->bbuf));
+    		vectorPointer->_M_start = const_cast<char*> (&pkt->bbuf[0]);
+    		vectorPointer->_M_finish = vectorPointer->_M_start + pkt->bbuf.size();
+    		vectorPointer->_M_end_of_storage = vectorPointer->_M_finish;
 
-        }
+    		if (VITAProcess.IFDPacket.enable_stream_identifier) {
+    			//standardDPacket->setStreamIdentifier(_streamMap[streamID]+streamIDoffset);
+    			standardDPacket->setStreamIdentifier(_streamMap.hash);
+    		}
 
-        if (VITAProcess.IFDPacket.enable_class_identifier) {
-            //sets the class_identifier and the payload format
-            standardDPacket->setPayloadFormat(pf->getBits());
-        }
+    		if (VITAProcess.IFDPacket.enable_class_identifier) {
+    			//sets the class_identifier and the payload format
+    			//standardDPacket->setPayloadFormat(pf->getBits());
+    			standardDPacket->setClassID(standardPacketClassID);
+    		}
 
+    		if (VITAProcess.IFDPacket.embed_time_stamp) {
+    			standardDPacket->setTimeStamp(vrt_ts);
+    		}
 
-        standardDPacket->setTimeStamp(vrt_ts);
-        standardDPacket->setPacketCount(packetCount % 16);
+    		standardDPacket->setPacketCount(packetCount % 16);
+    	}
     } catch (vrt::VRTException &ex) {
        std::cout << "CAUGHT VRT EXCEPTION WHILE CREATING PACKET!: what(): " << ex.what() << std::endl;
     }
 
-    //match the class_identifierentifier of the context packet
+    //match the class_identifier of the context packet
     packetCount++;
 }
 
