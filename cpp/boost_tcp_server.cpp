@@ -63,7 +63,7 @@ void session::handle_read(const boost::system::error_code& error,
 	else
 	{
         std::stringstream ss;
-        ss << "TCPServer::session::handle_read - Error occured: " << error;
+        ss << "TCPServer::session::handle_read - Error occurred: " << error;
         this->_printDebug(ss.str());
 	}
 }
@@ -74,7 +74,7 @@ void session::handle_write(const boost::system::error_code& error)
 	writeBuffer_.pop_front();
 	if (error)
 	{
-		std::cerr<<"TCPServer::session - ERROR writting session data: "<<error<<std::endl;
+		std::cerr<<"TCPServer::session - ERROR writing session data: "<<error<<std::endl;
 		server_->closeSession(shared_from_this());
 	}
 	else if(!writeBuffer_.empty())

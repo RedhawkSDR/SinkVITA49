@@ -612,7 +612,7 @@ int SinkVITA49_i::createPayload(int size, bool signed_v) {
         if (bytesPerPacket > 65515) {
             //find the difference
             difference = bytesPerPacket - 65515;
-            bytesPerPacket = bytesPerPacket - difference;
+            bytesPerPacket = 65515;
         }
 
         connection_status.packet_size = bytesPerPacket;
