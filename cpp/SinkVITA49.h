@@ -36,6 +36,7 @@
 #include <boost/functional/hash.hpp>
 #include "multicast.h"
 #include "unicast.h"
+#include "unicast_tcp.h"
 #include "boost_tcp_server.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -268,7 +269,7 @@ private:
 	bool unicast_tcp_open;
 	bool multicast_udp_open;
 
-	server *tcpServer;
+	unicast_tcp_t tcp_server;
 };
 
 

@@ -114,8 +114,6 @@ void SinkVITA49_i::__constructor__() {
     unicast_tcp_open = false;
     multicast_udp_open = false;
     
-    tcpServer = NULL;
-
     this->dataVITA49_out->setLogger(this->__logger);
     
     // Setup property change listeners
@@ -374,11 +372,6 @@ void SinkVITA49_i::advancedConfigurationChanged(const advanced_configuration_str
 }
 
 void SinkVITA49_i::destroy_tx_thread() {
-    if (tcpServer) {
-        LOG_DEBUG(SinkVITA49_i, "DESTROYING TCP SERVER");
-        delete tcpServer;
-        tcpServer = NULL;
-    }
     if (_transmitThread != NULL) {
         LOG_DEBUG(SinkVITA49_i, "DESTROYING TX THREAD");
         runThread = false;
@@ -435,7 +428,7 @@ bool SinkVITA49_i::launch_tx_thread() {
             }
             unicast_udp_open = true;
         } else {
-            tcpServer = new server(curr_attach.port, vita49_payload_size, false);
+            tcp_server = unicast_tcp_server(attachedInterface, attachedIPstr, curr_attach.port);
             LOG_DEBUG(SinkVITA49_i, "Error: SinkVITA49::TRANSMITTER() failed to create unicast socket");
             unicast_tcp_open = true;
         }
@@ -513,6 +506,15 @@ void SinkVITA49_i::TRANSMITTER() {
     int frameCounter = 0;
     long pCount = 0;
     int result;
+    unicast_tcp_t client;
+    bool firstPacket = true;
+
+    // TODO: Right now this only accepts one connection.
+    // Should be replaced with the boost version borrowed
+    // from the Sink and Source Socket
+    if (unicast_tcp_open) {
+    	client = unicast_tcp_accept(tcp_server);
+    }
 
     while (runThread) {
         boost::this_thread::interruption_point();
@@ -539,7 +541,8 @@ void SinkVITA49_i::TRANSMITTER() {
                     }
 
                     if (unicast_tcp_open) {
-                    	tcpServer->write(vrl_frame->getFramePointer(), vrl_frame->getFrameLength());
+                    	result = unicast_tcp_transmit(client, vrl_frame->getFramePointer(), vrl_frame->getFrameLength());
+                    	LOG_DEBUG(SinkVITA49_i, "Transmitted TCP data..." << result << strerror(errno));
                     }
                 } else {
                 	if (unicast_udp_open) {
@@ -548,7 +551,12 @@ void SinkVITA49_i::TRANSMITTER() {
                 	}
 
                 	if (unicast_tcp_open) {
-                		tcpServer->write(vrtPacket->getPacketPointer(), vrtPacket->getPacketLength());
+                		result = unicast_tcp_transmit(client, vrtPacket->getPacketPointer(), vrtPacket->getPacketLength());
+                		LOG_DEBUG(SinkVITA49_i, "Transmitted TCP data..." << result << strerror(errno));
+
+                		if (firstPacket && vrtPacket->getPacketType() == PacketType_Data) {
+                			firstPacket = false;
+                		}
                 	}
                 }
                 workQueue2.pop();
