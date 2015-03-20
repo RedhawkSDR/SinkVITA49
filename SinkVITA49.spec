@@ -30,7 +30,7 @@ Prefix:         %{_prefix}
 %define _infodir       %{_prefix}/info
 
 Name:           SinkVITA49
-Version:        3.0
+Version:        3.0.0
 Release:        1%{?dist}
 Summary:        Component %{name}
 
