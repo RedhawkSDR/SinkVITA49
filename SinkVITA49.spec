@@ -45,7 +45,7 @@ Requires:       redhawk >= 1.10
 # Interface requirements
 BuildRequires:  bulkioInterfaces >= 1.10
 Requires:       bulkioInterfaces >= 1.10
-BuildRequires:	redhawk-libVITA49_v1 >= 1.0.0
+BuildRequires:	redhawk-libVITA49_v1-devel >= 1.0.0
 Requires:	redhawk-libVITA49_v1 >= 1.0.0
 
 %description
