@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see http://www.gnu.org/licenses/.
 #
-AC_INIT(SinkVITA49, 3.0)
+AC_INIT(rh.SinkVITA49, 3.0.0)
 AM_INIT_AUTOMAKE(nostdinc)
 
 AC_PROG_CC
@@ -31,7 +31,6 @@ OSSIE_SDRROOT_AS_PREFIX
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Dependencies
-export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 PKG_CHECK_MODULES([PROJECTDEPS], [ossie >= 1.10 omniORB4 >= 4.1.0  ])
 PKG_CHECK_MODULES([INTERFACEDEPS], [bulkio >= 1.10])
 OSSIE_ENABLE_LOG4CXX

@@ -29,7 +29,7 @@ Prefix:         %{_prefix}
 %define _mandir        %{_prefix}/man
 %define _infodir       %{_prefix}/info
 
-Name:           SinkVITA49
+Name:           rh.SinkVITA49
 Version:        3.0.0
 Release:        1%{?dist}
 Summary:        Component %{name}
@@ -45,13 +45,15 @@ Requires:       redhawk >= 1.10
 # Interface requirements
 BuildRequires:  bulkioInterfaces >= 1.10
 Requires:       bulkioInterfaces >= 1.10
+
+# C++ requirements
 BuildRequires:	redhawk-libVITA49_v1-devel >= 1.0.0
 Requires:	redhawk-libVITA49_v1 >= 1.0.0
 
 %description
-The SinkVITA49 REDHAWK component creates a UDP/multicast or TCP VITA49 packet stream and converts the data and SRI Keywords to IF data packets and Context packets for use within/between/outside of a REDHAWK domain application.
-
-The Keywords for generating context packets are documented in the attached readme.txt
+Component %{name}
+ * Commit: __REVISION__
+ * Source Date/Time: __DATETIME__
 
 
 %prep
@@ -62,7 +64,7 @@ The Keywords for generating context packets are documented in the attached readm
 # Implementation cpp
 pushd cpp
 ./reconf
-%define _bindir %{_prefix}/dom/components/SinkVITA49/cpp
+%define _bindir %{_prefix}/dom/components/rh/SinkVITA49/cpp
 %configure
 make %{?_smp_mflags}
 popd
@@ -72,7 +74,7 @@ popd
 rm -rf $RPM_BUILD_ROOT
 # Implementation cpp
 pushd cpp
-%define _bindir %{_prefix}/dom/components/SinkVITA49/cpp
+%define _bindir %{_prefix}/dom/components/rh/SinkVITA49/cpp
 make install DESTDIR=$RPM_BUILD_ROOT
 popd
 
@@ -83,9 +85,9 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,redhawk,redhawk,-)
-%dir %{_prefix}/dom/components/%{name}
-%{_prefix}/dom/components/%{name}/SinkVITA49.scd.xml
-%{_prefix}/dom/components/%{name}/SinkVITA49.prf.xml
-%{_prefix}/dom/components/%{name}/SinkVITA49.spd.xml
-%{_prefix}/dom/components/%{name}/cpp
+%dir %{_prefix}/dom/components/rh/SinkVITA49
+%{_prefix}/dom/components/rh/SinkVITA49/SinkVITA49.scd.xml
+%{_prefix}/dom/components/rh/SinkVITA49/SinkVITA49.prf.xml
+%{_prefix}/dom/components/rh/SinkVITA49/SinkVITA49.spd.xml
+%{_prefix}/dom/components/rh/SinkVITA49/cpp
 

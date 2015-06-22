@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # This file is protected by Copyright. Please refer to the COPYRIGHT file
 # distributed with this source distribution.
@@ -18,14 +18,15 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see http://www.gnu.org/licenses/.
 #
+
 if [ "$1" = "rpm" ]; then
     # A very simplistic RPM build scenario
-    if [ -e SinkVITA49.spec ]; then
+    if [ -e rh.SinkVITA49.spec ]; then
         mydir=`dirname $0`
         tmpdir=`mktemp -d`
-        cp -r ${mydir} ${tmpdir}/SinkVITA49-3.0
-        tar czf ${tmpdir}/SinkVITA49-3.0.tar.gz --exclude=".svn" -C ${tmpdir} SinkVITA49-3.0
-        rpmbuild -ta ${tmpdir}/SinkVITA49-3.0.tar.gz
+        cp -r ${mydir} ${tmpdir}/rh.SinkVITA49-3.0.0
+        tar czf ${tmpdir}/rh.SinkVITA49-3.0.0.tar.gz --exclude=".svn" -C ${tmpdir} rh.SinkVITA49-3.0.0
+        rpmbuild -ta ${tmpdir}/rh.SinkVITA49-3.0.0.tar.gz
         rm -rf $tmpdir
     else
         echo "Missing RPM spec file in" `pwd`
@@ -35,7 +36,19 @@ else
     for impl in cpp ; do
         cd $impl
         if [ -e build.sh ]; then
-            ./build.sh $*
+            if [ $# == 1 ]; then
+                if [ $1 == 'clean' ]; then
+                    rm -f Makefile
+                    rm -f config.*
+                    ./build.sh distclean
+                else
+                    ./build.sh $*
+                fi
+            else
+                ./build.sh $*
+            fi
+        elif [ -e Makefile ] && [ Makefile.am -ot Makefile ]; then
+            make $*
         elif [ -e reconf ]; then
             ./reconf && ./configure && make $*
         else

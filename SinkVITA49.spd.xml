@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE softpkg PUBLIC "-//JTRS//DTD SCA V2.2.2 SPD//EN" "softpkg.dtd">
 <!--
 This file is protected by Copyright. Please refer to the COPYRIGHT file
@@ -19,8 +19,8 @@ details.
 You should have received a copy of the GNU Lesser General Public License along
 with this program.  If not, see http://www.gnu.org/licenses/.
 -->
-<softpkg id="DCE:325fef4e-7a04-465a-a2c7-02f29eb94d66" name="SinkVITA49" type="sca_compliant" version="3.0">
-  <title></title>
+<softpkg id="DCE:c89f24d4-16d3-11e5-8963-3417ebc4aab5" name="rh.SinkVITA49" type="sca_compliant" version="3.0.0">
+  <title/>
   <author>
     <name>null</name>
   </author>
