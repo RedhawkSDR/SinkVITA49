@@ -87,8 +87,8 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.dataSource = sb.DataSource()
         self.dataSource._sampleRate = 8000
         self.dataSink = sb.DataSink()
-        self.sink = sb.launch("SinkVITA49", execparams={"DEBUG_LEVEL":SINK_DEBUG_LEVEL})#, debugger=myDebugger)
-        self.source = sb.launch("SourceVITA49", execparams={"DEBUG_LEVEL":SOURCE_DEBUG_LEVEL})#, debugger=myDebugger)
+        self.sink = sb.launch("rh.SinkVITA49", execparams={"DEBUG_LEVEL":SINK_DEBUG_LEVEL})#, debugger=myDebugger)
+        self.source = sb.launch("rh.SourceVITA49", execparams={"DEBUG_LEVEL":SOURCE_DEBUG_LEVEL})#, debugger=myDebugger)
 
         # Setup sink/source settings
         self.sink.network_settings.enable = True

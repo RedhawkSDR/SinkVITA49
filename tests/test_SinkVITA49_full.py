@@ -38,7 +38,7 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
     
     def setUp(self):
         self.dataSource = sb.DataSource()
-        self.comp = sb.launch("SinkVITA49")
+        self.comp = sb.launch("rh.SinkVITA49")
         self.inVitaPort = bulkio.InVITA49Port("dataVITA49_in")
         self.dataSource.connect(self.comp, 'dataShort_in')
         self.inVitaPort.setNewAttachDetachListener(self)

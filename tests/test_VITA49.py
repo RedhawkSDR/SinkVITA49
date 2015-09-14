@@ -444,8 +444,8 @@ f.write('********** Unit Test 5 **********\n')
 f.write( '*********************************\n\n')
 
 f.write('********** Creating components and connections **********\n')
-sink = sb.Component('SinkVITA49',execparams={"DEBUG_LEVEL":0})
-source = sb.Component('SourceVITA49',execparams={"DEBUG_LEVEL":0})
+sink = sb.launch('rh.SinkVITA49',execparams={"DEBUG_LEVEL":0})
+source = sb.launch('rh.SourceVITA49',execparams={"DEBUG_LEVEL":0})
 #push data into the sink NIC
 inputS=sb.DataSource();
 outputS=sb.DataSink();
