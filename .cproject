@@ -26,10 +26,10 @@
 								<option id="gnu.cpp.compiler.exe.debug.option.optimization.level.37814125" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.debug.option.debugging.level.1349386837" name="Debug Level" superClass="gnu.cpp.compiler.exe.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1900918315" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${SdrRoot}/dom/deps/rh/VITA49/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${OssieHome}/include&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/include/omniORB4"/>
 									<listOptionValue builtIn="false" value="/usr/include/omnithread"/>
+									<listOptionValue builtIn="false" value="/usr/include/omniORB4"/>
+									<listOptionValue builtIn="false" value="&quot;${SdrRoot}/dom/deps/rh/VITA49/include&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.976012921" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -95,10 +95,10 @@
 								<option id="gnu.cpp.compiler.exe.release.option.optimization.level.40052404" name="Optimization Level" superClass="gnu.cpp.compiler.exe.release.option.optimization.level" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.release.option.debugging.level.931068761" name="Debug Level" superClass="gnu.cpp.compiler.exe.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.2003528434" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${SdrRoot}/dom/deps/rh/VITA49/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${OssieHome}/include&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/include/omniORB4"/>
 									<listOptionValue builtIn="false" value="/usr/include/omnithread"/>
+									<listOptionValue builtIn="false" value="/usr/include/omniORB4"/>
+									<listOptionValue builtIn="false" value="&quot;${SdrRoot}/dom/deps/rh/VITA49/include&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1245683207" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>

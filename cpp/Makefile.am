@@ -23,10 +23,13 @@ bin_PROGRAMS = SinkVITA49
 
 xmldir = $(prefix)/dom/components/rh/SinkVITA49/
 dist_xml_DATA = ../SinkVITA49.scd.xml ../SinkVITA49.prf.xml ../SinkVITA49.spd.xml
-ACLOCAL_AMFLAGS = -I$(OSSIEHOME)/share/aclocal/ossie
+ACLOCAL_AMFLAGS = -I m4 -I${OSSIEHOME}/share/aclocal/ossie
+AUTOMAKE_OPTIONS = subdir-objects
+
 
 
 distclean-local:
+	rm -rf m4
 	rm -f config.*
 	rm -rf autom4te.cache
 	rm -f acinclude.m4
