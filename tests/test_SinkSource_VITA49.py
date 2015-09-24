@@ -76,6 +76,11 @@ FLOAT_DATA=DOUBLE_DATA
 OCTET_DATA=[1,2,3,4,5] * 100000
 CHAR_DATA=[1,2,3,4,5] * 100000
 
+# This unit test relies on rhSourceVITA49 component for end-to-end testing
+if "rh.SourceVITA49" not in sb.catalog():
+    print "ERROR - cannot run tests without rh.SourceVITA49. Install in $SDRROOT and try again."
+    sys.exit(1)
+
 class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
     """Test for all resource implementations in SinkVITA49"""
 
@@ -87,8 +92,9 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.dataSource = sb.DataSource()
         self.dataSource._sampleRate = 8000
         self.dataSink = sb.DataSink()
-        self.sink = sb.launch("rh.SinkVITA49", execparams={"DEBUG_LEVEL":SINK_DEBUG_LEVEL})#, debugger=myDebugger)
+        self.sink = sb.launch("../SinkVITA49.spd.xml", execparams={"DEBUG_LEVEL":SINK_DEBUG_LEVEL})#, debugger=myDebugger)
         self.source = sb.launch("rh.SourceVITA49", execparams={"DEBUG_LEVEL":SOURCE_DEBUG_LEVEL})#, debugger=myDebugger)
+
 
         # Setup sink/source settings
         self.sink.network_settings.enable = True

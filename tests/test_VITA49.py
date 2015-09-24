@@ -20,7 +20,7 @@
 #
 import unittest
 import ossie.utils.testing
-import os
+import os, sys
 from omniORB import any, CORBA
 from ossie.cf import CF
 from ossie.utils.bulkio import bulkio_data_helpers
@@ -443,8 +443,13 @@ f.write('*********************************\n')
 f.write('********** Unit Test 5 **********\n')
 f.write( '*********************************\n\n')
 
+# This unit test relies on rhSourceVITA49 component for end-to-end testing
+if "rh.SourceVITA49" not in sb.catalog():
+    print "ERROR - cannot run tests without rh.SourceVITA49. Install in $SDRROOT and try again."
+    sys.exit(1)
+
 f.write('********** Creating components and connections **********\n')
-sink = sb.launch('rh.SinkVITA49',execparams={"DEBUG_LEVEL":0})
+sink = sb.launch('../SinkVITA49.spd.xml',execparams={"DEBUG_LEVEL":0})
 source = sb.launch('rh.SourceVITA49',execparams={"DEBUG_LEVEL":0})
 #push data into the sink NIC
 inputS=sb.DataSource();
