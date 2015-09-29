@@ -16,11 +16,6 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/.
- *
- * This is the component code. This file contains the child class where
- * custom functionality can be added to the component. Custom
- * functionality to the base class can be extended here. Access to
- * the ports can also be done from this class
  */
 
 #include <iostream>

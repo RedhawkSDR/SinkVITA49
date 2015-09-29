@@ -16,11 +16,6 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/.
-
- * This is the component code. This file contains the child class where
- * custom functionality can be added to the component. Custom
- * functionality to the base class can be extended here. Access to
- * the ports can also be done from this class
  */
 
 #ifndef UNICAST_H_
@@ -30,10 +25,10 @@
 #include <stdexcept>
 
 class BadParameterError3 : public std::runtime_error {
-       	public:
-       		BadParameterError3(const std::string& what_arg) : std::runtime_error(what_arg) {
-	        }
-    };
+public:
+    BadParameterError3(const std::string& what_arg) : std::runtime_error(what_arg) {
+    }
+};
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,12 +36,12 @@ extern "C" {
 
 
 typedef struct {
-  int sock;
-  struct sockaddr_in addr;
+    int sock;
+    struct sockaddr_in addr;
 } unicast_t;
 
 unicast_t unicast_client (const char* iface, const char* group, int port);
-ssize_t unicast_receive (unicast_t client, void* buffer, size_t bytes);
+ssize_t unicast_receive (unicast_t client, void* buffer, size_t bytes, unsigned int to_in_msecs= 0);
 unicast_t unicast_server (const char* iface, const char* group, int port);
 ssize_t unicast_transmit (unicast_t server, const void* buffer, size_t bytes);
 int unicast_poll_in (unicast_t client, int timeout);
