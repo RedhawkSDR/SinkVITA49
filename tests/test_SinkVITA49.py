@@ -18,6 +18,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see http://www.gnu.org/licenses/.
 #
+
+DEBUG_LEVEL = 3
+
 import unittest
 import ossie.utils.testing
 import os
@@ -25,24 +28,77 @@ from omniORB import any, CORBA
 from ossie.cf import CF
 from ossie.utils.bulkio import bulkio_data_helpers
 from bulkio.bulkioInterfaces import BULKIO, BULKIO__POA
-from ossie.utils import sb
-import time
 
+# Full functionality is tested via end-to-end testing using SinkVITA49 and SourceVITA49 in the fulltest_VITA49.py file
 class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
-    """Test for all resource implementations in SinkVITA49"""
+    """Test for all resource implementations in rh.SinkVITA49"""
 
-    def testScaBasicBehavior(self):
+
+    def setUp(self):
+        """Set up the unit test - this is run before every method that starts with test
+        """
+        ossie.utils.testing.ScaComponentTestCase.setUp(self)
+        
+        self.componentSetup()
+        
+        
+    def tearDown(self):
+        """Finish the unit test - this is run after every method that starts with test
+        """
+        self.comp.stop()
+        
         #######################################################################
-        # Launch the resource with the default execparams
+        # Simulate regular component shutdown
+        self.comp.releaseObject()
+           
+        ossie.utils.testing.ScaComponentTestCase.tearDown(self)
+
+
+    def componentSetup(self):
+        """Standard start-up for testing the component
+        """
+        print ' * Note:'
+        print ' * During this unit test, SinkVITA49 will warn about using a built-in table'
+        print ' * for leap seconds if no leap seconds file is found at the indicated location.'
+        #######################################################################
+        # Launch the component with the default execparams
         execparams = self.getPropertySet(kinds=("execparam",), modes=("readwrite", "writeonly"), includeNil=False)
         execparams = dict([(x.id, any.from_any(x.value)) for x in execparams])
-        self.launch(execparams)
+        execparams["DEBUG_LEVEL"] = DEBUG_LEVEL
+        self.launch(execparams, initialize=True)
+        
+        #######################################################################
+        # Simulate regular component startup
+        configureProps = self.getPropertySet(kinds=("configure",), modes=("readwrite", "writeonly"), includeNil=False)
+        self.comp.configure(configureProps)
+        
+        self.comp.start()
+        
+        
+    def testStartStopRelease(self):
+        """testStartStopRelease - Only start, stop, then release the component.
+        """
+        # This is all accomplished by the setUp and tearDown functions called for each test.
+        # So, do nothing.
+        pass
+    
+        #######################################################################
+        # Make sure start and stop can be called without throwing exceptions
+        #self.comp.start()
+        #self.comp.stop()
 
+        #######################################################################
+        # Simulate regular resource shutdown
+        #self.comp.releaseObject()
+
+
+    def testScaBasicBehavior(self):
+        """testScaBasicBehavior
+        """
         #######################################################################
         # Verify the basic state of the resource
         self.assertNotEqual(self.comp, None)
         self.assertEqual(self.comp.ref._non_existent(), False)
-
         self.assertEqual(self.comp.ref._is_a("IDL:CF/Resource:1.0"), True)
 
         #######################################################################
@@ -71,23 +127,28 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
             self.assertEqual(port_obj._non_existent(), False)
             self.assertEqual(port_obj._is_a(port.get_repid()),  True)
 
+
+    def testBasicDataInput(self):
+        """testBasicDataInput
+        """
         #######################################################################
-        # Make sure start and stop can be called without throwing exceptions
+        # Configure properties
+        self.comp.network_settings.Address = "127.0.0.1"
+        self.comp.Interface = "eth0"
+        self.comp.network_settings.vlan = 0;
+        self.comp.network_settings.Port = 24967
+        self.comp.network_settings.useUDP = True
+        self.comp.network_settings.MTU = 1500
+        self.comp.network_settings.enable = True
+        self.comp.numberOfBuffers = 200000
 
-	self.comp.network_settings.Address = "127.0.0.1"
-	self.comp.Interface = "eth0"
-	self.comp.network_settings.vlan = 0;
-	self.comp.network_settings.Port = 24967
-	self.comp.network_settings.useUDP = True
-	self.comp.network_settings.MTU = 1500
-	self.comp.network_settings.enable = True
-	self.comp.numberOfBuffers = 200000
-
+        #######################################################################
+        # Push SRI and data to the component
         dh = bulkio_data_helpers.ArraySource(BULKIO__POA.dataShort)
-
         dh.connectPort(self.comp_obj.getPort("dataShort_in"), "connectionId")
 
-	defaultKeywords = []
+        # Build SRI w/ all expected keywords
+        defaultKeywords = []
         defaultKeywords.append(CF.DataType(id="COL_BW",value=CORBA.Any(CORBA.TC_double,20000000)))
         defaultKeywords.append(CF.DataType(id="COL_IF_FREQUENCY_OFFSET",value=CORBA.Any(CORBA.TC_double,70000000)))
         defaultKeywords.append(CF.DataType(id="COL_RF",value=CORBA.Any(CORBA.TC_double,155500000)))
@@ -154,33 +215,17 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         defaultKeywords.append(CF.DataType(id="EPH_RELATIVE.VEL_Y",value=CORBA.Any(CORBA.TC_double,0)))
         defaultKeywords.append(CF.DataType(id="EPH_RELATIVE.VEL_Z",value=CORBA.Any(CORBA.TC_double,0)))
 
+        H = BULKIO.StreamSRI(1, 0.0, 0.0001, 1, 0, 0.0, 0.0, 1,
+                    1, "defaultStreamID", False, defaultKeywords)
+    
+        currentSampleTime = 0
+        T = BULKIO.PrecisionUTCTime(BULKIO.TCM_CPU, BULKIO.TCS_VALID, 0.0, int(currentSampleTime), currentSampleTime - int(currentSampleTime))
+    
+        # Push SRI and data
+        dh.pushSRI(H)
+        data = range(10000)
+        dh.pushPacket(data, T, True, "defaultStreamID")
 
-	H = BULKIO.StreamSRI(1, 0.0, 0.0001, 1, 0, 0.0, 0.0, 1,
-				1, "defaultStreamID", False, defaultKeywords)
-
-	currentSampleTime = 0
-	T = BULKIO.PrecisionUTCTime(BULKIO.TCM_CPU, BULKIO.TCS_VALID, 0.0, int(currentSampleTime), currentSampleTime - int(currentSampleTime))
-
-	
-        self.comp.start()
-	time.sleep(1)
-
-	dh.pushSRI(H)
-	data = range(10000)
-	dh.pushPacket(data, T, True, "defaultStreamID")
-
-	time.sleep(1)
-        self.comp.stop()
-
-        #######################################################################
-        # Simulate regular resource shutdown
-        self.comp.releaseObject()
-    # TODO Add additional tests here
-    #
-    # See:
-    #   ossie.utils.bulkio.bulkio_helpers,
-    #   ossie.utils.bluefile.bluefile_helpers
-    # for modules that will assist with testing resource with BULKIO ports
 
 if __name__ == "__main__":
     ossie.utils.testing.main("../SinkVITA49.spd.xml") # By default tests all implementations
