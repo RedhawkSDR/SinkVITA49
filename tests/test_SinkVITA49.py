@@ -118,13 +118,13 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         """ VITA49 attach listener for self.inVitaPort.
         """
         self.attaches += 1
-        #print "Attaches:", self.attaches, "  UserId:", userId, "  StreamDef:", streamDef
+        print "Attaches:", self.attaches, "  UserId:", userId, "  StreamDef:", streamDef
 
     def detach(self, id):
         """ VITA49 detach listener for self.inVitaPort.
         """
         self.detaches += 1
-        #print "Detaches:", self.detaches, "  DetachId:", id
+        print "Detaches:", self.detaches, "  DetachId:", id
 
     def waitForAttach(self, timeOut=5, waitInterval=0.2, previousAttaches=0):
         """ Wait for VITA49 connection to trigger attach callback.
@@ -161,7 +161,6 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         """
         self.comp.advanced_configuration.max_payload_size = max_payload_size #1452 for MTU of 1500
         self.comp.advanced_configuration.number_of_buffers = number_of_buffers # 10 is the default
-        #self.comp.advanced_configuration.number_of_buffers = 200000 # TODO: probably bad value 
         self.comp.advanced_configuration.force_transmit = force_transmit
         self.comp.advanced_configuration.endian_representation = endian_representation
         self.comp.advanced_configuration.use_bulkio_sri = use_bulkio_sri
@@ -176,8 +175,8 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         defaultKeywords.append(sb.SRIKeyword(name="COL_BW",value=colBW,format="double")) #20000000
         defaultKeywords.append(sb.SRIKeyword(name="COL_RF",value=colRF,format="double")) #155500000
         defaultKeywords.append(sb.SRIKeyword(name="COL_RF_OFFSET",value=20,format="double")) #20
-        defaultKeywords.append(sb.SRIKeyword(name="COL_IF_FREQUENCY_OFFSET",value=70000000,format="double")) #70000000 #TODO - twice? what should this be instead?
-        defaultKeywords.append(sb.SRIKeyword(name="COL_IF_FREQUENCY_OFFSET",value=30999,format="double")) #30999    #TODO - twice? what should this be instead?
+        defaultKeywords.append(sb.SRIKeyword(name="COL_IF",value=70000000,format="double")) #70000000
+        defaultKeywords.append(sb.SRIKeyword(name="COL_IF_FREQUENCY_OFFSET",value=30999,format="double")) #30999
         defaultKeywords.append(sb.SRIKeyword(name="COL_REFERENCE_LEVEL", value=10.2969,format="float")) #10.2969
         defaultKeywords.append(sb.SRIKeyword(name="COL_GAIN",value=10,format="float")) #10
         defaultKeywords.append(sb.SRIKeyword(name="DATA_GAIN",value=0,format="float")) #0
@@ -353,6 +352,7 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.dataSource.push(dataIn, streamID=streamId, sampleRate=10000.0)
         self.waitForAttach(previousAttaches=attaches)
 
+        time.sleep(0.1) # This is necessary b/c it can take the port some time to update
         self.assertEqual(len(self.inVitaPort._get_attachmentIds()),1)
 
         attachId = self.inVitaPort._get_attachmentIds()[0]
@@ -361,8 +361,8 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.validateStreamDef(recvStreamDef, streamId)
 
 
-    def testSendsData(self):
-        """testSendsData
+    def testSendData(self):
+        """testSendData
         """
         # Configure network info
         self.configureNetwork()
@@ -374,13 +374,14 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         # Start components
         self.callStart()
         
-        streamId = "testSendsData"
+        streamId = "testSendData"
         dataIn = range(1000)
         attaches=self.attaches
         self.connectVitaPorts()
         self.dataSource.push(dataIn, streamID=streamId, sampleRate=10000.0)
         self.waitForAttach(previousAttaches=attaches)
 
+        time.sleep(0.1) # This is necessary b/c it can take the port some time to update
         self.assertEqual(len(self.inVitaPort._get_attachmentIds()),1)
 
         attachId = self.inVitaPort._get_attachmentIds()[0]
@@ -396,7 +397,6 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.closeSocket()
         
         
-
     def testDetachmentOnDisconnect(self):
         """testDetachmentOnDisconnect
         """
@@ -413,12 +413,14 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.dataSource.push(data,streamID=streamId)
         self.waitForAttach(previousAttaches=attaches)
 
+        time.sleep(0.1) # This is necessary b/c it can take the port some time to update
         self.assertEqual(len(self.inVitaPort._get_attachmentIds()),1)
         
         detaches=self.detaches
         self.disconnectVitaPorts()
         self.waitForDetach(previousDetaches=detaches)
         
+        time.sleep(0.1) # This is necessary b/c it can take the port some time to update
         self.assertEqual(len(self.inVitaPort._get_attachmentIds()),0)
 
     def testReconnect(self):
@@ -437,18 +439,21 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.dataSource.push(data,streamID=streamId)
         self.waitForAttach(previousAttaches=attaches)
 
+        time.sleep(0.1) # This is necessary b/c it can take the port some time to update
         self.assertEqual(len(self.inVitaPort._get_attachmentIds()),1)
         
         detaches=self.detaches
         self.disconnectVitaPorts()
         self.waitForDetach(previousDetaches=detaches)
         
+        time.sleep(0.1) # This is necessary b/c it can take the port some time to update
         self.assertEqual(len(self.inVitaPort._get_attachmentIds()),0)
         
         attaches=self.attaches
         self.connectVitaPorts()
         self.waitForAttach(previousAttaches=attaches)
         
+        time.sleep(0.1) # This is necessary b/c it can take the port some time to update
         self.assertEqual(len(self.inVitaPort._get_attachmentIds()),1)
         
         attachId = self.inVitaPort._get_attachmentIds()[0]
@@ -475,6 +480,7 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.dataSource.push(data, streamID=streamId, sampleRate=10000.0, SRIKeywords=defaultKeywords)
         self.waitForAttach(previousAttaches=attaches)
 
+        time.sleep(0.1) # This is necessary b/c it can take the port some time to update
         self.assertEqual(len(self.inVitaPort._get_attachmentIds()),1)
 
         attachId = self.inVitaPort._get_attachmentIds()[0]
@@ -504,6 +510,7 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.waitForAttach(previousAttaches=attaches)
         self.waitForDetach(previousDetaches=detaches)
         
+        time.sleep(0.1) # This is necessary b/c it can take the port some time to update
         self.assertEqual(len(self.inVitaPort._get_attachmentIds()),0)
         
         # TODO - more validation
@@ -526,6 +533,7 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.dataSource.push(data, streamID=streamId, sampleRate=10000.0, complexData=True)
         self.waitForAttach(previousAttaches=attaches)
 
+        time.sleep(0.1) # This is necessary b/c it can take the port some time to update
         self.assertEqual(len(self.inVitaPort._get_attachmentIds()),1)
 
         attachId = self.inVitaPort._get_attachmentIds()[0]
@@ -533,7 +541,6 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         
         self.assertEqual(recvStreamDef.id, streamId)
         
-        # TODO - more validation
 
     def testForceTransmit(self):
         """testForceTransmit
@@ -555,6 +562,7 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.dataSource.push(data, streamID=streamId, sampleRate=10000.0)
         self.waitForAttach(previousAttaches=attaches)
 
+        time.sleep(0.1) # This is necessary b/c it can take the port some time to update
         self.assertEqual(len(self.inVitaPort._get_attachmentIds()),1)
 
         attachId = self.inVitaPort._get_attachmentIds()[0]
@@ -563,8 +571,6 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.assertEqual(recvStreamDef.id, streamId)
         
         # TODO - more validation
-        
-    #TODO - more test cases
 
 if __name__ == "__main__":
     ossie.utils.testing.main("../SinkVITA49.spd.xml") # By default tests all implementations
