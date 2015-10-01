@@ -220,7 +220,7 @@ payload format. See section 7.1.3 The Class Identifier.</description>
       <action type="external"/>
     </simple>
     <simple id="advanced_configuration::throttle_time_between_packet_bursts" mode="readwrite" name="throttle_time_between_packet_bursts" type="long">
-      <description>Due to the pushPacket being larger then the VITA49 packet payload size packets may appear in bursts. This sets the number of microseconds between VITA49 transmitted packets. Default is 0. </description>
+      <description>Due to the pushPacket being larger than the VITA49 packet payload size, packets may appear in bursts. This sets the number of microseconds between VITA49 transmitted packets. Default is 100. </description>
       <value>100</value>
       <units>microseconds</units>
       <kind kindtype="configure"/>
