@@ -30,7 +30,7 @@ from ossie.utils.bulkio import bulkio_data_helpers
 from bulkio.bulkioInterfaces import BULKIO, BULKIO__POA
 import bulkio
 from ossie.utils import sb
-import time
+import time, socket, struct
 
 # Full functionality is tested via end-to-end testing using SinkVITA49 and SourceVITA49 in the fulltest_VITA49.py file
 class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
@@ -118,13 +118,13 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         """ VITA49 attach listener for self.inVitaPort.
         """
         self.attaches += 1
-        print "Attaches:", self.attaches, "  UserId:", userId, "  StreamDef:", streamDef
+        #print "Attaches:", self.attaches, "  UserId:", userId, "  StreamDef:", streamDef
 
     def detach(self, id):
         """ VITA49 detach listener for self.inVitaPort.
         """
         self.detaches += 1
-        print "Detaches:", self.detaches, "  DetachId:", id
+        #print "Detaches:", self.detaches, "  DetachId:", id
 
     def waitForAttach(self, timeOut=5, waitInterval=0.2, previousAttaches=0):
         """ Wait for VITA49 connection to trigger attach callback.
@@ -255,6 +255,42 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         if udp != None:
             self.assertEqual(streamDef.protocol,udp)
         
+    def setupSocket(self):
+        port = 24967
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind(("", port))
+        
+    def closeSocket(self):
+        self.sock.close()
+        self.sock = None
+        
+    def validateSocketData(self, dataIn):
+        try:
+            msg = ''
+            count=10
+            while len(msg) < 1000 and count > 0:
+                data, addr = self.sock.recvfrom(1024)
+                if len(data)>0:
+                    msg = '%s%s'%(msg,data)
+                    #print 'Received:',len(data),' Total:',len(msg)
+                else:
+                    count-=1
+                    time.sleep(0.1)
+                    
+        except:
+            pass
+        finally:
+            HDRLEN=32
+            msg = msg.split('VRLP')
+            for m in msg:
+                if len(m) < 200:
+                    continue
+                m=m[HDRLEN:].split('VEND')[0]
+                fmt = 'h'*int(len(m)/2)
+                m1 = struct.unpack(fmt,m)
+                #print 'm1:',m1
+                self.assertEqual(list(m1),dataIn[:len(m1)])
+        
 
     ###################
     #   BEGIN TESTS
@@ -311,10 +347,10 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.callStart()
         
         streamId = "testAttachmentSendsStreamDef"
-        data = range(1000)
+        dataIn = range(1000)
         attaches=self.attaches
         self.connectVitaPorts()
-        self.dataSource.push(data, streamID=streamId, sampleRate=10000.0)
+        self.dataSource.push(dataIn, streamID=streamId, sampleRate=10000.0)
         self.waitForAttach(previousAttaches=attaches)
 
         self.assertEqual(len(self.inVitaPort._get_attachmentIds()),1)
@@ -322,10 +358,44 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         attachId = self.inVitaPort._get_attachmentIds()[0]
         recvStreamDef = self.inVitaPort.getStreamDefinition(attachId)
         
-        self.assertEqual(recvStreamDef.id, streamId)
+        self.validateStreamDef(recvStreamDef, streamId)
+
+
+    def testSendsData(self):
+        """testSendsData
+        """
+        # Configure network info
+        self.configureNetwork()
+        
+        # Set up receiver
+        self.setupSocket()
+        #print "waiting on port:", port
+        
+        # Start components
+        self.callStart()
+        
+        streamId = "testSendsData"
+        dataIn = range(1000)
+        attaches=self.attaches
+        self.connectVitaPorts()
+        self.dataSource.push(dataIn, streamID=streamId, sampleRate=10000.0)
+        self.waitForAttach(previousAttaches=attaches)
+
+        self.assertEqual(len(self.inVitaPort._get_attachmentIds()),1)
+
+        attachId = self.inVitaPort._get_attachmentIds()[0]
+        recvStreamDef = self.inVitaPort.getStreamDefinition(attachId)
+        
         self.validateStreamDef(recvStreamDef, streamId)
         
-        # TODO - more validation
+        # End the stream so the remaining data is pushed
+        self.dataSource.push([], EOS=True, streamID=streamId, sampleRate=10000.0)
+        
+        # Get the data
+        self.validateSocketData(dataIn)
+        self.closeSocket()
+        
+        
 
     def testDetachmentOnDisconnect(self):
         """testDetachmentOnDisconnect
@@ -495,7 +565,6 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         # TODO - more validation
         
     #TODO - more test cases
-
 
 if __name__ == "__main__":
     ossie.utils.testing.main("../SinkVITA49.spd.xml") # By default tests all implementations
