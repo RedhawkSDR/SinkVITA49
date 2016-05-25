@@ -454,12 +454,17 @@ bool SinkVITA49_i::launch_tx_thread() {
 //create a context packet every X seconds
 
 void SinkVITA49_i::timerThread() {
-    while (runThread) {
+	long sleepAmount = (timeOut*1e6)/10;
+	while (runThread) {
         if (!waitingForSRI) {
             createIFContextPacket(_tContext, 0);
             boost::this_thread::interruption_point();
         }
-        sleep(timeOut);
+        for (int i =0; i<10;i++) {
+        	if (not(runThread))
+        		break;
+        	usleep(sleepAmount);
+        }
     }
 }
 
