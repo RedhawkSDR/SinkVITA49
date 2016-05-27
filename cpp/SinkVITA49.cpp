@@ -262,7 +262,8 @@ void SinkVITA49_i::stop() throw (CF::Resource::StopError, CORBA::SystemException
         unicast_tcp_open = false;
     }
 
-    destroy_tx_thread();
+    tearDownOutputStream();
+
 }
 
 void SinkVITA49_i::updateCurrAttach() {
