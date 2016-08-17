@@ -32,6 +32,32 @@ import bulkio
 from ossie.utils import sb
 import time, socket, struct
 
+
+class vita49_data_header(object):
+    
+    def __init__(self,header):
+        self.vrlframe,byte0,byte1,self.packet_size,self.streamID,self.reserved_word,byte3,byte4,self.vector_size,self.wsec,self.fsec = struct.unpack("!I2BHIIBBHIQ", header)
+        self.packet_type = byte0 >>4
+        # Data Packet
+        if self.packet_type == 1: 
+            self.has_class_ID = (byte0 >>3 ) & 0x01
+            self.has_trailer = (byte0 >>2 ) & 0x01
+            self.tsi = (byte1 >>6 ) & 0x03
+            self.tsf = (byte1 >>4 ) & 0x03
+            self.packet_count = byte1  & 0x0F
+            self.complex = (byte4 >>4) & 0x01
+            self.data_type = byte4 & 0x0F
+        # Context Packet
+        if self.packet_type == 4: 
+            self.has_class_ID = (byte0 >>3 ) & 0x01
+            self.tsi = (byte1 >>6 ) & 0x03
+            self.tsf = (byte1 >>4 ) & 0x03
+            self.packet_count = byte1  & 0x0F
+      
+        
+        
+        
+
 # Full functionality is tested via end-to-end testing using SinkVITA49 and SourceVITA49 in the fulltest_VITA49.py file
 class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
     """Test for all resource implementations in rh.SinkVITA49.
@@ -60,9 +86,10 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.dataSource.connect(self.comp, 'dataShort_in')
         self.inVitaPort = bulkio.InVITA49Port("dataVITA49_in")
         self.inVitaPort.setNewAttachDetachListener(self)
-
+        self.sock = None
         self.attaches = 0
         self.detaches = 0
+
 
     def tearDown(self):
         """Finish the unit test - this is run after every method that starts with test.
@@ -79,7 +106,7 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.inVitaPort = None
         self.dataSource.releaseObject()
         self.dataSource = None
-        
+        self.closeSocket()
         #######################################################################
         # Simulate regular component shutdown
         self.comp.releaseObject()
@@ -238,6 +265,14 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         defaultKeywords.append(sb.SRIKeyword(name="EPH_RELATIVE.VEL_Y",value=0,format="double")) #0
         defaultKeywords.append(sb.SRIKeyword(name="EPH_RELATIVE.VEL_Z",value=0,format="double")) #0
         return defaultKeywords
+
+    def validateSRI(self, sri, streamID, xstart = 0,xdelta=.0001,xunits=0,subsize=0,mode=0):
+        self.assertEqual(sri.streamID, streamID)        
+        self.assertEqual(sri.xstart, xstart)
+        self.assertEqual(sri.xdelta, xdelta)
+        self.assertEqual(sri.xunits, xunits)
+        self.assertEqual(sri.subsize, subsize)
+        self.assertEqual(sri.mode, mode)
     
     def validateStreamDef(self, streamDef, streamId, ip='127.0.0.1', vlan=0, port=24967, udp=None):
         """ Validate StreamDef
@@ -260,18 +295,37 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.sock.bind(("", port))
         
     def closeSocket(self):
-        self.sock.close()
+        try:
+            self.sock.close()
+        except AttributeError:
+            pass
         self.sock = None
-        
-    def validateSocketData(self, dataIn):
+
+    # Same implementation that C++ Boost uses for hashing a std::string. This is what the component uses to go from the string stream ID to the VITA49 numberic stream ID
+    def boosthashStr(self,inputStr):
+      seed = 0
+      for c in inputStr:
+        seed ^= (ord(c) + 0x9e3779b9 + (seed<<6) + (seed>>2)) & 0xffffffffffffffff
+      return seed & 0xffffffff
+    
+    # Takes the 64 bit two word number and converts to a floating point based on radix
+    def to_double64(self,data,radixPoint):
+        divisor = 2**radixPoint
+        if divisor !=0:
+            return data/divisor
+        else:
+            return 0
+
+
+    def validateSocketData(self, dataIn,streamID,complex=False,data_type=3,bw=0,rfreq=0,ifreq=0,sr=0):
         try:
             msg = ''
-            count=10
+            count=100
             while len(msg) < 1000 and count > 0:
                 data, addr = self.sock.recvfrom(1024)
                 if len(data)>0:
                     msg = '%s%s'%(msg,data)
-                    #print 'Received:',len(data),' Total:',len(msg)
+                    print 'Received:',len(data),' Total:',len(msg)
                 else:
                     count-=1
                     time.sleep(0.1)
@@ -282,15 +336,59 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
             HDRLEN=32
             msg = msg.split('VRLP')
             for m in msg:
-                if len(m) < 200:
-                    continue
-                m=m[HDRLEN:].split('VEND')[0]
-                fmt = 'h'*int(len(m)/2)
-                m1 = struct.unpack(fmt,m)
-                #print 'm1:',m1
-                self.assertEqual(list(m1),dataIn[:len(m1)])
-        
+              if len(m) > 32:
+                header = vita49_data_header(m[:HDRLEN])
+                #print "Type " , header.packet_type, len(m)
+                if header.packet_type ==1: #Data Packet
+                    # Validate Header
+                    header = vita49_data_header(m[:HDRLEN])
+                    id = self.boosthashStr(streamID)
+                    self.assertEqual(header.streamID,id)
+                    self.assertEqual(header.complex, complex)
+                    self.assertEqual(header.data_type,data_type)
+                    m=m[HDRLEN:].split('VEND')[0]
+                    fmt = 'h'*int(len(m)/2)
+                    m1 = struct.unpack(fmt,m)
+                    self.assertEqual(list(m1),dataIn[:len(m1)])
 
+                if header.packet_type ==4: #Context Packet        
+                    header = vita49_data_header(m[:HDRLEN])
+                    id = self.boosthashStr(streamID)
+                    self.assertEqual(header.streamID,id)
+                    m=m[HDRLEN:].split('VEND')[0]
+                    #fmt = '!'+'I'*int(len(m)/4)
+                    contextpayload=struct.unpack("!I",m[:4])
+                    m = m[4:]
+                    
+                    if (contextpayload[0] >>30 ) & 0x0001:  #Reference Point Identifier
+                        m = m[4:]
+                    if (contextpayload[0] >>29 ) & 0x0001:  #Bandwidth
+                        bw_context = self.to_double64(struct.unpack("!q",m[:8])[0],20)
+                        self.assertEqual(bw,bw_context)
+                        m = m[8:]        
+                    if (contextpayload[0] >>28 ) & 0x0001:  #IF Freq
+                        if_context = self.to_double64(struct.unpack("!q",m[:8])[0],20)
+                        self.assertEqual(ifreq,if_context)
+                        m = m[8:]      
+                    if (contextpayload[0] >>27 ) & 0x0001:  #RF Freq
+                        rf_context = self.to_double64(struct.unpack("!q",m[:8])[0],20)
+                        self.assertEqual(rfreq,rf_context)
+                        m = m[8:]         
+                    if (contextpayload[0] >>26 ) & 0x0001:  #RF Freq Offset
+                        m = m[8:]  
+                    if (contextpayload[0] >>25 ) & 0x0001:  #IF Band Offset
+                        m = m[8:] 
+                    if (contextpayload[0] >>24 ) & 0x0001:  #Reference Level
+                        m = m[4:] 
+                    if (contextpayload[0] >>23 ) & 0x0001:  #Gain
+                        m = m[4:] 
+                    if (contextpayload[0] >>22 ) & 0x0001:  #Over-range Count
+                        m = m[4:] 
+                    if (contextpayload[0] >>21 ) & 0x0001:  #Sample Rate
+                        sr_context = self.to_double64(struct.unpack("!q",m[:8])[0],20)
+                        self.assertEqual(sr, sr_context)
+                        m = m[8:] 
+   
     ###################
     #   BEGIN TESTS
     ###################
@@ -378,7 +476,8 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         dataIn = range(1000)
         attaches=self.attaches
         self.connectVitaPorts()
-        self.dataSource.push(dataIn, streamID=streamId, sampleRate=10000.0)
+        keywords = [sb.SRIKeyword("COL_BW",30.0,"double"),sb.SRIKeyword("COL_RF",150000000.0,"double")]
+        self.dataSource.push(dataIn, streamID=streamId, sampleRate=10000.0,SRIKeywords=keywords )
         self.waitForAttach(previousAttaches=attaches)
 
         time.sleep(0.1) # This is necessary b/c it can take the port some time to update
@@ -392,10 +491,107 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         # End the stream so the remaining data is pushed
         self.dataSource.push([], EOS=True, streamID=streamId, sampleRate=10000.0)
         
-        # Get the data
-        self.validateSocketData(dataIn)
+        # Get the data and validate
+        #Input data was real short data 
+        self.validateSocketData(dataIn,streamId,False,3,bw=30.0,rfreq=150000000.0,ifreq=10000.0/4,sr=10000.0)
         self.closeSocket()
+
+    def testSendDataComplex(self):
+        """testSendData
+        """
+        # Configure network info
+        self.configureNetwork()
         
+        # Set up receiver
+        self.setupSocket()
+        #print "waiting on port:", port
+        
+        # Start components
+        self.callStart()
+        
+        streamId = "testSendDataComplex"
+        dataIn = range(1000)
+        attaches=self.attaches
+        self.connectVitaPorts()
+        keywords = [sb.SRIKeyword("COL_BW",30.0,"double"),sb.SRIKeyword("COL_RF",150000000.0,"double")]
+        self.dataSource.push(dataIn, streamID=streamId, sampleRate=10000.0,complexData=True,SRIKeywords=keywords )
+        self.waitForAttach(previousAttaches=attaches)
+
+        time.sleep(0.1) # This is necessary b/c it can take the port some time to update
+        self.assertEqual(len(self.inVitaPort._get_attachmentIds()),1)
+
+        attachId = self.inVitaPort._get_attachmentIds()[0]
+        recvStreamDef = self.inVitaPort.getStreamDefinition(attachId)
+        
+        self.validateStreamDef(recvStreamDef, streamId)
+        
+        # End the stream so the remaining data is pushed
+        self.dataSource.push([], EOS=True, streamID=streamId, sampleRate=10000.0)
+        
+        # Get the data and validate
+        #Input data was real short data 
+        self.validateSocketData(dataIn,streamId,True,3,bw=30.0,rfreq=150000000.0,ifreq=0,sr=10000.0)
+        self.closeSocket()
+
+    def testSRIValid(self):
+        """testSendData
+        """
+        # Configure network info
+        self.configureNetwork()
+        
+        # Set up receiver
+        #self.setupSocket()
+        #print "waiting on port:", port
+        
+        # Start components
+        self.callStart()
+        
+        streamId = "testSRIValid"
+        dataIn = range(1000)
+        attaches=self.attaches
+        self.connectVitaPorts()
+        self.dataSource.push(dataIn, streamID=streamId, sampleRate=10000.0)
+        self.waitForAttach(previousAttaches=attaches)
+
+        time.sleep(0.1) # This is necessary b/c it can take the port some time to update
+        self.assertEqual(len(self.inVitaPort._get_attachmentIds()),1)
+
+        attachId = self.inVitaPort._get_attachmentIds()[0]
+        recvStreamDef = self.inVitaPort.getStreamDefinition(attachId)
+        
+        self.validateStreamDef(recvStreamDef, streamId)
+        
+        self.assertEqual(self.inVitaPort.sriDict.has_key(streamId),True)
+        sri = self.inVitaPort.sriDict[streamId][0]
+        self.validateSRI(sri,streamId)
+        # Push more data with new SR and check SRI update
+        self.dataSource.push(dataIn, EOS=True,streamID=streamId, sampleRate=50000.0)
+        detaches=self.detaches
+        self.waitForDetach(previousDetaches=detaches)
+        self.assertEqual(self.inVitaPort.sriDict.has_key(streamId),True)
+        sri = self.inVitaPort.sriDict[streamId][0]
+        self.validateSRI(sri,streamId,xdelta=1.0/50000.0)
+        
+
+        
+        # Change StreamID and push data and confirm new SRI is sent. 
+        time.sleep(0.1)
+        attaches=self.attaches
+        streamId = "testSRIValid2"
+        self.dataSource.push(dataIn, streamID=streamId, sampleRate=20000.0)
+        self.waitForAttach(previousAttaches=attaches)
+        time.sleep(0.1)
+        
+        #Check Stream Def
+        self.assertEqual(len(self.inVitaPort._get_attachmentIds()),1)
+        attachId = self.inVitaPort._get_attachmentIds()[0]
+        recvStreamDef = self.inVitaPort.getStreamDefinition(attachId)
+        self.validateStreamDef(recvStreamDef, streamId)
+        
+        #check SRI
+        self.assertEqual(self.inVitaPort.sriDict.has_key(streamId),True)
+        sri = self.inVitaPort.sriDict[streamId][0]
+        self.validateSRI(sri,streamId,xdelta=1.0/20000.0)
         
     def testDetachmentOnDisconnect(self):
         """testDetachmentOnDisconnect
@@ -488,6 +684,11 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         
         self.assertEqual(recvStreamDef.id, streamId)
         
+        #check SRI
+        self.assertEqual(self.inVitaPort.sriDict.has_key(streamId),True)
+        sri = self.inVitaPort.sriDict[streamId][0]
+        self.validateSRI(sri,streamId)
+        
         # TODO - more validation
 
 
@@ -506,12 +707,17 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         attaches=self.attaches
         detaches=self.detaches
         self.connectVitaPorts()
-        self.dataSource.push(data, EOS=True, streamID=streamId)
+        self.dataSource.push(data, EOS=True, streamID=streamId,sampleRate=10000.0)
         self.waitForAttach(previousAttaches=attaches)
         self.waitForDetach(previousDetaches=detaches)
         
         time.sleep(0.1) # This is necessary b/c it can take the port some time to update
         self.assertEqual(len(self.inVitaPort._get_attachmentIds()),0)
+        
+        #check SRI
+        self.assertEqual(self.inVitaPort.sriDict.has_key(streamId),True)
+        sri = self.inVitaPort.sriDict[streamId][0]
+        self.validateSRI(sri,streamId)
         
         # TODO - more validation
 
@@ -540,6 +746,10 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         recvStreamDef = self.inVitaPort.getStreamDefinition(attachId)
         
         self.assertEqual(recvStreamDef.id, streamId)
+        #check SRI
+        self.assertEqual(self.inVitaPort.sriDict.has_key(streamId),True)
+        sri = self.inVitaPort.sriDict[streamId][0]
+        self.validateSRI(sri,streamId,mode=1)
         
 
     def testForceTransmit(self):
