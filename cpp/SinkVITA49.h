@@ -124,7 +124,6 @@ private:
 	unicast_t uni_server;
 	long timeOut;
 	PayloadFormat *pf;
-	BasicContextPacket *contextPacket;
 
 	struct{
 		std::string streamID;

@@ -42,28 +42,28 @@ using namespace vrt;
 
 // Protocol Field Sizes in bytes
 // VITA49 IF Data and Context
-const int VITA49_HEADER_SIZE = 4;			// Mandatory
-const int VITA49_STREAM_ID_SIZE = 4;		// Optional
-const int VITA49_CLASS_ID_SIZE = 8;			// Optional
-const int VITA49_INT_SECS_SIZE = 4;			// Optional
-const int VITA49_FRAC_SECS_SIZE = 8;		// Optional
+const int VITA49_HEADER_SIZE = 4;           // Mandatory
+const int VITA49_STREAM_ID_SIZE = 4;        // Optional
+const int VITA49_CLASS_ID_SIZE = 8;         // Optional
+const int VITA49_INT_SECS_SIZE = 4;         // Optional
+const int VITA49_FRAC_SECS_SIZE = 8;        // Optional
 
 // VITA49 IF Data Only
-const int VITA49_TRAILER_SIZE = 4;			// Optional
+const int VITA49_TRAILER_SIZE = 4;          // Optional
 
 // VITA49 Context Only
-const int VITA49_CONTEXT_INDEX_SIZE = 4;	// Optional
+const int VITA49_CONTEXT_INDEX_SIZE = 4;    // Optional
 
 // VITA49 VRL
-const int VRL_FRAME_SIZE = 12;				// Optional for VRT, Mandatory for VRL  (?)
-const int VRL_CRC_SIZE = 4;					// Optional for VRT, Mandatory for VRL  (?)
+const int VRL_FRAME_SIZE = 12;              // Optional for VRT, Mandatory for VRL  (?)
+const int VRL_CRC_SIZE = 4;                 // Optional for VRT, Mandatory for VRL  (?)
 
 // UDP
-const int UDP_HEADER_SIZE = 8;				// Mandatory
+const int UDP_HEADER_SIZE = 8;              // Mandatory
 
 // TCP
-const int TCP_HEADER_SIZE = 20;				// Mandatory
-// TCP options has range of 0-40 bytes		// Optional
+const int TCP_HEADER_SIZE = 20;             // Mandatory
+// TCP options has range of 0-40 bytes      // Optional
 
 /************************************************
  * Constructor
@@ -93,7 +93,6 @@ void SinkVITA49_i::__constructor__() {
     numBuffers = 200000;
     setDefaultSRI();
     waitForContext = true;
-    //contextPacket = NULL;
     tx_thead_running = false;
     pf = new PayloadFormat(true, RealComplexType_ComplexCartesian, DataItemFormat_Double, false, 0, 0, 64, 64, 1, 1);
     //initialize the _streamDef to some settings
@@ -186,7 +185,7 @@ void SinkVITA49_i::resetVITAProcess() {
 }
 
 void SinkVITA49_i::initialize_values() {
-    //	_streamMap.clear();
+    //    _streamMap.clear();
 
     burstPacketCount = 0;
     _attachMap.clear();
@@ -455,16 +454,16 @@ bool SinkVITA49_i::launch_tx_thread() {
 //create a context packet every X seconds
 
 void SinkVITA49_i::timerThread() {
-	long sleepAmount = (timeOut*1e6)/10;
-	while (runThread) {
+    long sleepAmount = (timeOut*1e6)/10;
+    while (runThread) {
         if (!waitingForSRI) {
             createIFContextPacket(_tContext, 0);
             boost::this_thread::interruption_point();
         }
         for (int i =0; i<10;i++) {
-        	if (not(runThread))
-        		break;
-        	usleep(sleepAmount);
+            if (not(runThread))
+                break;
+            usleep(sleepAmount);
         }
     }
 }
@@ -519,7 +518,7 @@ void SinkVITA49_i::TRANSMITTER() {
     // Should be replaced with the boost version borrowed
     // from the Sink and Source Socket
     if (unicast_tcp_open) {
-    	client = unicast_tcp_accept(tcp_server);
+        client = unicast_tcp_accept(tcp_server);
     }
 
     while (runThread) {
@@ -542,28 +541,28 @@ void SinkVITA49_i::TRANSMITTER() {
                     vrl_frame->setFrameCount((frameCounter++) & 0xFFF);
                     
                     if (unicast_udp_open) {
-                    	result = unicast_transmit(uni_server, vrl_frame->getFramePointer(), vrl_frame->getFrameLength());
-                    	LOG_DEBUG(SinkVITA49_i, "Transmitted UDP data..." << result << strerror(errno));
+                        result = unicast_transmit(uni_server, vrl_frame->getFramePointer(), vrl_frame->getFrameLength());
+                        LOG_DEBUG(SinkVITA49_i, "Transmitted UDP data..." << result << strerror(errno));
                     }
 
                     if (unicast_tcp_open) {
-                    	result = unicast_tcp_transmit(client, vrl_frame->getFramePointer(), vrl_frame->getFrameLength());
-                    	LOG_DEBUG(SinkVITA49_i, "Transmitted TCP data..." << result << strerror(errno));
+                        result = unicast_tcp_transmit(client, vrl_frame->getFramePointer(), vrl_frame->getFrameLength());
+                        LOG_DEBUG(SinkVITA49_i, "Transmitted TCP data..." << result << strerror(errno));
                     }
                 } else {
-                	if (unicast_udp_open) {
-                		result = unicast_transmit(uni_server, vrtPacket->getPacketPointer(), vrtPacket->getPacketLength());
-                		LOG_DEBUG(SinkVITA49_i, "Transmitted UDP data..." << result << strerror(errno));
-                	}
+                    if (unicast_udp_open) {
+                        result = unicast_transmit(uni_server, vrtPacket->getPacketPointer(), vrtPacket->getPacketLength());
+                        LOG_DEBUG(SinkVITA49_i, "Transmitted UDP data..." << result << strerror(errno));
+                    }
 
-                	if (unicast_tcp_open) {
-                		result = unicast_tcp_transmit(client, vrtPacket->getPacketPointer(), vrtPacket->getPacketLength());
-                		LOG_DEBUG(SinkVITA49_i, "Transmitted TCP data..." << result << strerror(errno));
+                    if (unicast_tcp_open) {
+                        result = unicast_tcp_transmit(client, vrtPacket->getPacketPointer(), vrtPacket->getPacketLength());
+                        LOG_DEBUG(SinkVITA49_i, "Transmitted TCP data..." << result << strerror(errno));
 
-                		if (firstPacket && vrtPacket->getPacketType() == PacketType_Data) {
-                			firstPacket = false;
-                		}
-                	}
+                        if (firstPacket && vrtPacket->getPacketType() == PacketType_Data) {
+                            firstPacket = false;
+                        }
+                    }
                 }
                 workQueue2.pop();
             }
@@ -583,44 +582,44 @@ int SinkVITA49_i::createPayload(int size, bool signed_v) {
 
         // UDP Header
         if (curr_attach.use_udp_protocol || (attachedIP > lowMulti && attachedIP < highMulti && not curr_attach.ip_address.empty())) {
-        	bytesPerPacket += UDP_HEADER_SIZE;
+            bytesPerPacket += UDP_HEADER_SIZE;
         }
         // TCP Header
         else {
-        	bytesPerPacket += TCP_HEADER_SIZE;
+            bytesPerPacket += TCP_HEADER_SIZE;
         }
 
         // VRL Frame
         if (VITAProcess.Encap.enable_vrl_frames) {
-        	bytesPerPacket += VRL_FRAME_SIZE;
+            bytesPerPacket += VRL_FRAME_SIZE;
         }
 
         if (VITAProcess.Encap.enable_crc) {
-        	bytesPerPacket += VRL_CRC_SIZE;
+            bytesPerPacket += VRL_CRC_SIZE;
         }
 
         // VRT IF Data
         if (VITAProcess.IFDPacket.enable) {
-        	bytesPerPacket += VITA49_HEADER_SIZE;
+            bytesPerPacket += VITA49_HEADER_SIZE;
 
-        	if (VITAProcess.IFDPacket.enable_stream_identifier) {
-        		bytesPerPacket += VITA49_STREAM_ID_SIZE;
-        	}
+            if (VITAProcess.IFDPacket.enable_stream_identifier) {
+                bytesPerPacket += VITA49_STREAM_ID_SIZE;
+            }
 
-        	if (VITAProcess.IFDPacket.enable_class_identifier) {
-        		bytesPerPacket += VITA49_CLASS_ID_SIZE;
-        	}
+            if (VITAProcess.IFDPacket.enable_class_identifier) {
+                bytesPerPacket += VITA49_CLASS_ID_SIZE;
+            }
 
-        	if (VITAProcess.IFDPacket.embed_time_stamp) {
-        		bytesPerPacket += VITA49_INT_SECS_SIZE;
-        		bytesPerPacket += VITA49_FRAC_SECS_SIZE;
-        	}
+            if (VITAProcess.IFDPacket.embed_time_stamp) {
+                bytesPerPacket += VITA49_INT_SECS_SIZE;
+                bytesPerPacket += VITA49_FRAC_SECS_SIZE;
+            }
 
-        	bytesPerPacket += vita49_payload_size;
+            bytesPerPacket += vita49_payload_size;
 
-        	if (VITAProcess.IFDPacket.enable_trailer) {
-        		bytesPerPacket += VITA49_TRAILER_SIZE;
-        	}
+            if (VITAProcess.IFDPacket.enable_trailer) {
+                bytesPerPacket += VITA49_TRAILER_SIZE;
+            }
         }
 
         if (bytesPerPacket > 65515) {
@@ -709,30 +708,30 @@ int SinkVITA49_i::createPayload(int size, bool signed_v) {
 void SinkVITA49_i::createPacket(BasicDataPacket* pkt, TimeStamp vrt_ts, int sampleIndex_l) {
     //std::string streamID = CORBA::string_dup(currSRI.streamID);
     try {
-    	if (VITAProcess.IFDPacket.enable) {
-    		/* use the vector magic to make this work */
-    		std::_Vector_base<char, _seqVector::seqVectorAllocator<char> >::_Vector_impl *vectorPointer = (std::_Vector_base<char, _seqVector::seqVectorAllocator<char> >::_Vector_impl *) ((void*) & (standardDPacket->bbuf));
-    		vectorPointer->_M_start = const_cast<char*> (&pkt->bbuf[0]);
-    		vectorPointer->_M_finish = vectorPointer->_M_start + pkt->bbuf.size();
-    		vectorPointer->_M_end_of_storage = vectorPointer->_M_finish;
+        if (VITAProcess.IFDPacket.enable) {
+            /* use the vector magic to make this work */
+            std::_Vector_base<char, _seqVector::seqVectorAllocator<char> >::_Vector_impl *vectorPointer = (std::_Vector_base<char, _seqVector::seqVectorAllocator<char> >::_Vector_impl *) ((void*) & (standardDPacket->bbuf));
+            vectorPointer->_M_start = const_cast<char*> (&pkt->bbuf[0]);
+            vectorPointer->_M_finish = vectorPointer->_M_start + pkt->bbuf.size();
+            vectorPointer->_M_end_of_storage = vectorPointer->_M_finish;
 
-    		if (VITAProcess.IFDPacket.enable_stream_identifier) {
-    			//standardDPacket->setStreamIdentifier(_streamMap[streamID]+streamIDoffset);
-    			standardDPacket->setStreamIdentifier(_streamMap.hash);
-    		}
+            if (VITAProcess.IFDPacket.enable_stream_identifier) {
+                //standardDPacket->setStreamIdentifier(_streamMap[streamID]+streamIDoffset);
+                standardDPacket->setStreamIdentifier(_streamMap.hash);
+            }
 
-    		if (VITAProcess.IFDPacket.enable_class_identifier) {
-    			//sets the class_identifier and the payload format
-    			//standardDPacket->setPayloadFormat(pf->getBits());
-    			standardDPacket->setClassID(standardPacketClassID);
-    		}
+            if (VITAProcess.IFDPacket.enable_class_identifier) {
+                //sets the class_identifier and the payload format
+                //standardDPacket->setPayloadFormat(pf->getBits());
+                standardDPacket->setClassID(standardPacketClassID);
+            }
 
-    		if (VITAProcess.IFDPacket.embed_time_stamp) {
-    			standardDPacket->setTimeStamp(vrt_ts);
-    		}
+            if (VITAProcess.IFDPacket.embed_time_stamp) {
+                standardDPacket->setTimeStamp(vrt_ts);
+            }
 
-    		standardDPacket->setPacketCount(packetCount % 16);
-    	}
+            standardDPacket->setPacketCount(packetCount % 16);
+        }
     } catch (vrt::VRTException &ex) {
        std::cout << "CAUGHT VRT EXCEPTION WHILE CREATING PACKET!: what(): " << ex.what() << std::endl;
     }
@@ -742,8 +741,8 @@ void SinkVITA49_i::createPacket(BasicDataPacket* pkt, TimeStamp vrt_ts, int samp
 }
 
 int SinkVITA49_i::createIFContextPacket(BULKIO::PrecisionUTCTime t, int index) {
-    BasicContextPacket* pkt = new BasicContextPacket();
     TimeStamp ts;
+    BasicContextPacket* contextPacket = new BasicContextPacket();
     if (runThread) {
         if (strcmp(_streamMap.streamID.c_str(), currSRI.streamID) != 0) {
             LOG_ERROR(SinkVITA49_i, currSRI.streamID << " Does not Match " << _streamMap.streamID);
@@ -754,58 +753,62 @@ int SinkVITA49_i::createIFContextPacket(BULKIO::PrecisionUTCTime t, int index) {
         //createIFContextPacket(cp,nextTimeStamp);
         bool changed = false;
         /* fill out the packet will all fields per the VITA49 Spec */
-        pkt->setChangePacket(false);
-        pkt->setReferencePointIdentifier(0);
-        pkt->setBandwidth(0.0);
-        pkt->setFrequencyIF(0.0);
-        pkt->setFrequencyRF(0.0);
-        pkt->setFrequencyOffsetRF(0.0);
-        pkt->setBandOffsetIF(0.0);
-        pkt->setReferenceLevel(0.0);
-        pkt->setGain(0.0);
-        //pkt->setGain1(0.0); //?
-        //pkt->setGain2(0.0); //?
-        pkt->setOverRangeCount(0);
-        pkt->setSampleRate(0.0);
-        //pkt->setSamplePeriod(0.0); //?
-        pkt->setTimeStampAdjustment(0);
-        pkt->setTimeStampCalibration(0);
-        pkt->setTemperature(0);
-        pkt->setCalibratedTimeStamp(_FALSE);
-        pkt->setDataValid(_FALSE);
-        pkt->setReferenceLocked(_FALSE);
-        pkt->setAutomaticGainControl(_FALSE);
-        pkt->setSignalDetected(_FALSE);
-        pkt->setInvertedSpectrum(_FALSE); //?
-        pkt->setOverRange(_FALSE);
-        pkt->setDiscontinuous(_FALSE);
-        pkt->setDataPayloadFormat(pf->getBits());
-        pkt->setUserDefinedBits(0); //?
+        // All fields are persistent unless otherwise marked
+
+/*
+        contextPacket->setChangePacket(false);
+        contextPacket->setReferencePointIdentifier(0);
+        contextPacket->setBandwidth(0.0);
+        contextPacket->setFrequencyIF(0.0);
+        contextPacket->setFrequencyRF(0.0);
+        contextPacket->setFrequencyOffsetRF(0.0);
+        contextPacket->setBandOffsetIF(0.0);
+        contextPacket->setReferenceLevel(0.0);
+        contextPacket->setGain(0.0);
+        //contextPacket->setGain1(0.0); //?
+        //contextPacket->setGain2(0.0); //?
+        contextPacket->setOverRangeCount(0);
+        contextPacket->setSampleRate(0.0);
+        //contextPacket->setSamplePeriod(0.0); //?
+        contextPacket->setTimeStampAdjustment(0);
+        contextPacket->setTimeStampCalibration(0);
+        contextPacket->setTemperature(0);
+        contextPacket->setCalibratedTimeStamp(_FALSE);
+        contextPacket->setDataValid(_FALSE);
+        contextPacket->setReferenceLocked(_FALSE);
+        contextPacket->setAutomaticGainControl(_FALSE);
+        contextPacket->setSignalDetected(_FALSE);
+        contextPacket->setInvertedSpectrum(_FALSE); //?
+        contextPacket->setOverRange(_FALSE); // Not persistent
+        contextPacket->setDiscontinuous(_FALSE); //Not persistent
+        contextPacket->setDataPayloadFormat(pf->getBits());
+        contextPacket->setUserDefinedBits(0); //? Not Persistent
+*/
 
         if (VITAProcess.IFCPacket.enable_stream_identifier)
-            pkt->setStreamIdentifier(_streamMap.hash + VITAProcess.IFCPacket.stream_identifier_offset); // The stream ID
+            contextPacket->setStreamIdentifier(_streamMap.hash + VITAProcess.IFCPacket.stream_identifier_offset); // The stream ID
         if (VITAProcess.IFCPacket.enable_class_identifier) {
             if (strcmp(VITAProcess.IFCPacket.class_identifier.c_str(), "DEFAULT") == 0) {
-                pkt->setClassID(standardPacketClassID);
+                contextPacket->setClassID(standardPacketClassID);
                 VITAProcess.IFCPacket.class_identifier = standardPacketClassID;
             } else {
                 std::string classID(VITAProcess.IFCPacket.class_identifier);
-                pkt->setClassID(classID);
+                contextPacket->setClassID(classID);
             }
         }
 
         if (VITAProcess.IFCPacket.enable_device_identifier) {
             std::string device_identifier(VITAProcess.IFCPacket.device_identifier);
-            pkt->setDeviceID(device_identifier);
+            contextPacket->setDeviceID(device_identifier);
         }
 
         if (VITAProcess.IFCPacket.embed_time_stamp) {
-            pkt->setTimeStamp(ts);
+            contextPacket->setTimeStamp(ts);
         }
-        pkt->setPacketCount(contextCount & 0xF);
+        contextPacket->setPacketCount(contextCount & 0xF);
         contextCount++;
-        pkt->setDataPayloadFormat(pf->getBits());
-        pkt->setSampleRate(1.0 / currSRI.xdelta);
+        contextPacket->setDataPayloadFormat(pf->getBits());
+        contextPacket->setSampleRate(1.0 / currSRI.xdelta);
         
         double value_d;
         float value_f;
@@ -817,115 +820,115 @@ int SinkVITA49_i::createIFContextPacket(BULKIO::PrecisionUTCTime t, int index) {
             if (strcmp("COL_BW", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_d;
 
-                pkt->setBandwidth(value_d);
+                contextPacket->setBandwidth(value_d);
                 changed = true;
             } else if (strcmp("COL_IF_FREQUENCY", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_d;
-                pkt->setFrequencyIF(value_d);
+                contextPacket->setFrequencyIF(value_d);
                 changed = true;
             } else if (strcmp("COL_RF", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_d;
-                pkt->setFrequencyRF(value_d);
+                contextPacket->setFrequencyRF(value_d);
                 changed = true;
             } else if (strcmp("COL_RF_OFFSET", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_d;
-                pkt->setFrequencyOffsetRF(value_d);
+                contextPacket->setFrequencyOffsetRF(value_d);
                 changed = true;
             } else if (strcmp("COL_IF_FREQUENCY_OFFSET", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_d;
-                pkt->setBandOffsetIF(value_d);
+                contextPacket->setBandOffsetIF(value_d);
                 changed = true;
             } else if (strcmp("COL_REFERENCE_LEVEL", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_f;
-                pkt->setReferenceLevel(value_f);
+                contextPacket->setReferenceLevel(value_f);
                 changed = true;
             } else if (strcmp("REFERENCE_POINT_IDENTIFIER", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_l;
-                pkt->setReferencePointIdentifier(value_l);
+                contextPacket->setReferencePointIdentifier(value_l);
                 changed = true;
             } else if (strcmp("COL_GAIN", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_f;
-                pkt->setGain1(value_f);
+                contextPacket->setGain1(value_f);
                 changed = true;
             } else if (strcmp("DATA_GAIN", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_f;
-                pkt->setGain2(value_f);
+                contextPacket->setGain2(value_f);
                 changed = true;
             } else if (strcmp("OVER_RANGE_SUM", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_d;
-                pkt->setOverRangeCount((long long) value_d);
+                contextPacket->setOverRangeCount((long long) value_d);
                 changed = true;
             } else if (strcmp("USER_DEFINED", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_l;
-                pkt->setUserDefinedBits((int32_t) value_l);
+                contextPacket->setUserDefinedBits((int32_t) value_l);
                 changed = true;
             } else if (strcmp("TIMESTAMP_ADJUSTMENT_PICOSECONDS", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_d;
-                pkt->setTimeStampAdjustment((long long) value_d);
+                contextPacket->setTimeStampAdjustment((long long) value_d);
                 changed = true;
             } else if (strcmp("TIMESTAMP_CALIBRATION", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_l;
-                pkt->setTimeStampCalibration((int32_t) value_l);
+                contextPacket->setTimeStampCalibration((int32_t) value_l);
                 changed = true;
             } else if (strcmp("TEMPERATURE", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_f;
-                pkt->setTemperature(value_f);
+                contextPacket->setTemperature(value_f);
                 changed = true;
             } else if (strcmp("DATA_VALID", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_b;
                 if (value_b)
-                    pkt->setDataValid(_TRUE);
+                    contextPacket->setDataValid(_TRUE);
                 if (!value_b)
-                    pkt->setDataValid(_FALSE);
+                    contextPacket->setDataValid(_FALSE);
                 changed = true;
             } else if (strcmp("REFERENCE_LOCKED", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_b;
                 if (value_b)
-                    pkt->setReferenceLocked(_TRUE);
+                    contextPacket->setReferenceLocked(_TRUE);
                 if (!value_b)
-                    pkt->setReferenceLocked(_FALSE);
+                    contextPacket->setReferenceLocked(_FALSE);
                 changed = true;
             } else if (strcmp("CALIBRATED_TIME_STAMP", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_b;
                 if (value_b)
-                    pkt->setCalibratedTimeStamp(_TRUE);
+                    contextPacket->setCalibratedTimeStamp(_TRUE);
                 if (!value_b)
-                    pkt->setCalibratedTimeStamp(_FALSE);
+                    contextPacket->setCalibratedTimeStamp(_FALSE);
                 changed = true;
             } else if (strcmp("AUTO_GAIN_CONTROL", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_b;
                 if (value_b)
-                    pkt->setAutomaticGainControl(_TRUE);
+                    contextPacket->setAutomaticGainControl(_TRUE);
                 if (!value_b)
-                    pkt->setAutomaticGainControl(_FALSE);
+                    contextPacket->setAutomaticGainControl(_FALSE);
                 changed = true;
             } else if (strcmp("SIGNAL_DETECTION", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_b;
                 if (value_b)
-                    pkt->setSignalDetected(_TRUE);
+                    contextPacket->setSignalDetected(_TRUE);
                 if (!value_b)
-                    pkt->setSignalDetected(_FALSE);
+                    contextPacket->setSignalDetected(_FALSE);
                 changed = true;
             } else if (strcmp("DATA_INVERSION", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_b;
                 if (value_b)
-                    pkt->setInvertedSpectrum(_TRUE);
+                    contextPacket->setInvertedSpectrum(_TRUE);
                 if (!value_b)
-                    pkt->setInvertedSpectrum(_FALSE);
+                    contextPacket->setInvertedSpectrum(_FALSE);
                 changed = true;
             } else if (strcmp("OVER_RANGE", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_b;
                 if (value_b)
-                    pkt->setOverRange(_TRUE);
+                    contextPacket->setOverRange(_TRUE);
                 if (!value_b)
-                    pkt->setOverRange(_FALSE);
+                    contextPacket->setOverRange(_FALSE);
                 changed = true;
             } else if (strcmp("SAMPLE_LOSS", currSRI.keywords[i].id) == 0) {
                 currSRI.keywords[i].value >>= value_b;
                 if (value_b)
-                    pkt->setDiscontinuous(_TRUE);
+                    contextPacket->setDiscontinuous(_TRUE);
                 if (!value_b)
-                    pkt->setDiscontinuous(_FALSE);
+                    contextPacket->setDiscontinuous(_FALSE);
                 changed = true;
             }
             else if (strcmp("GEOLOCATION_GPS", currSRI.keywords[i].id) == 0) {
@@ -942,7 +945,7 @@ int SinkVITA49_i::createIFContextPacket(BULKIO::PrecisionUTCTime t, int index) {
                 processingGeolocation.setSpeedOverGround(geolocation_gps.GROUND_SPEED);
                 processingGeolocation.setTrackAngle(geolocation_gps.TRACK_ANGLE);
 
-                pkt->setGeolocationGPS(processingGeolocation);
+                contextPacket->setGeolocationGPS(processingGeolocation);
                 delete time;
             }
             else if (strcmp("GEOLOCATION_INS", currSRI.keywords[i].id) == 0) {
@@ -959,7 +962,7 @@ int SinkVITA49_i::createIFContextPacket(BULKIO::PrecisionUTCTime t, int index) {
                 processingGEOINS.setSpeedOverGround(geolocation_ins.GROUND_SPEED);
                 processingGEOINS.setTrackAngle(geolocation_ins.TRACK_ANGLE);
 
-                pkt->setGeolocationINS(processingGEOINS);
+                contextPacket->setGeolocationINS(processingGEOINS);
                 delete time;
             }
             else if (strcmp("EPHEMERIS_ECEF", currSRI.keywords[i].id) == 0) {
@@ -991,7 +994,7 @@ int SinkVITA49_i::createIFContextPacket(BULKIO::PrecisionUTCTime t, int index) {
                 processingEphemeris.setRotationalAccelerationBeta(ephemeris_ecef.ROTATIONAL_ACCELERATION_BETA);
                 processingEphemeris.setRotationalAccelerationPhi(ephemeris_ecef.ROTATIONAL_ACCELERATION_PHI);
 
-                pkt->setEphemerisECEF(processingEphemeris);
+                contextPacket->setEphemerisECEF(processingEphemeris);
             }
             else if (strcmp("EPHEMERIS_RELATIVE", currSRI.keywords[i].id) == 0) {
                 EPHEMERIS_RELATIVE_struct ephemeris_relative;
@@ -1018,15 +1021,14 @@ int SinkVITA49_i::createIFContextPacket(BULKIO::PrecisionUTCTime t, int index) {
                 processingEphemerisRel.setRotationalAccelerationBeta(ephemeris_relative.ROTATIONAL_ACCELERATION_BETA);
                 processingEphemerisRel.setRotationalAccelerationPhi(ephemeris_relative.ROTATIONAL_ACCELERATION_PHI);
                 delete time;
-                //pkt->setEphemerisRelative(processingEphemerisRel);
+                //contextPacket->setEphemerisRelative(processingEphemerisRel);
             }
         }
         
-        pkt->setChangePacket(changed);
-        
+        contextPacket->setChangePacket(changed);
         {
             boost::mutex::scoped_lock lock(workQueueLock);
-            workQueue2.push(pkt);
+            workQueue2.push(contextPacket);
         }
     }
     return NORMAL;
@@ -1163,7 +1165,6 @@ template <class IN> bool SinkVITA49_i::singleService(IN *dataIn, bool signedPort
         bool t = mergeRecSRI(CORBApacket->SRI, CORBApacket->T);
         if (t && VITAProcess.IFCPacket.enable) {
             createPayload(sampleSize, signedPort);
-            //cp = new BasicContextPacket();
             //nextTimeStamp = calcNextTimeStamp(CORBApacket->T,currSRI.xdelta,dataIndex);
             if (leftOverDataSize == 0)
                 createIFContextPacket(CORBApacket->T, 0);

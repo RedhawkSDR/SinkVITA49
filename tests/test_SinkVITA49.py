@@ -565,7 +565,7 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
         self.assertEqual(self.inVitaPort.sriDict.has_key(streamId),True)
         sri = self.inVitaPort.sriDict[streamId][0]
         self.validateSRI(sri,streamId)
-        # Push more data with new SR and check SRI update
+        # Push more data with new SRI and check SRI update
         self.dataSource.push(dataIn, EOS=True,streamID=streamId, sampleRate=50000.0)
         detaches=self.detaches
         self.waitForDetach(previousDetaches=detaches)

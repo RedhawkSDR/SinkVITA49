@@ -31,7 +31,7 @@ Prefix:         %{_prefix}
 
 Name:           rh.SinkVITA49
 Version:        3.0.2
-Release:        1%{?dist}
+Release:        3%{?dist}
 Summary:        Component %{name}
 
 Group:          REDHAWK/Components
