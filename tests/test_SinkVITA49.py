@@ -23,7 +23,7 @@ DEBUG_LEVEL = 3
 
 import unittest
 import ossie.utils.testing
-import os
+import os, sys
 from omniORB import any, CORBA
 from ossie.cf import CF
 from ossie.utils.bulkio import bulkio_data_helpers
@@ -303,9 +303,10 @@ class ResourceTests(ossie.utils.testing.ScaComponentTestCase):
 
     # Same implementation that C++ Boost uses for hashing a std::string. This is what the component uses to go from the string stream ID to the VITA49 numberic stream ID
     def boosthashStr(self,inputStr):
+      allones = sys.maxint*2+1
       seed = 0
       for c in inputStr:
-        seed ^= (ord(c) + 0x9e3779b9 + (seed<<6) + (seed>>2)) & 0xffffffffffffffff
+        seed ^= (ord(c) + 0x9e3779b9 + (seed<<6) + (seed>>2)) & allones
       return seed & 0xffffffff
     
     # Takes the 64 bit two word number and converts to a floating point based on radix
