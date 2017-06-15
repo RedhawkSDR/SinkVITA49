@@ -484,7 +484,7 @@ void SinkVITA49_i::TRANSMITTER_M() {
                 boost::mutex::scoped_lock lock(workQueueLock);
                 vrtPacket = workQueue2.front();
                 if (VITAProcess.Encap.enable_vrl_frames) {
-                    vrl_frame->setVRTPacket(vrtPacket);
+                    vrl_frame->setVRTPackets(*vrtPacket);
                     if (VITAProcess.Encap.enable_crc)
                         vrl_frame->updateCRC();
                     vrl_frame->setFrameCount((frameCounter++) & 0xFFF);
@@ -533,7 +533,7 @@ void SinkVITA49_i::TRANSMITTER() {
                 boost::mutex::scoped_lock lock(workQueueLock);
                 vrtPacket = workQueue2.front();
                 if (VITAProcess.Encap.enable_vrl_frames) {
-                    vrl_frame->setVRTPacket(vrtPacket);
+                    vrl_frame->setVRTPackets(*vrtPacket);
 
                     if (VITAProcess.Encap.enable_crc)
                         vrl_frame->updateCRC();
@@ -980,19 +980,6 @@ int SinkVITA49_i::createIFContextPacket(BULKIO::PrecisionUTCTime t, int index) {
                 processingEphemeris.setVelocityY(ephemeris_ecef.VELOCITY_Y);
                 processingEphemeris.setVelocityZ(ephemeris_ecef.VELOCITY_Z);
                 delete time;
-                /* KNOWN BUG - ADJUNCT EPHEMERIS CLASS DOES NOT WORK AS EXPECTED
-        //EphemerisAdjunct Adjunct;
-        //processingEphemeris.setAdjunct(Adjunct);
-                 */
-                processingEphemeris.setRotationalVelocityAlpha(ephemeris_ecef.ROTATIONAL_VELOCITY_ALPHA);
-                processingEphemeris.setRotationalVelocityBeta(ephemeris_ecef.ROTATIONAL_VELOCITY_BETA);
-                processingEphemeris.setRotationalVelocityPhi(ephemeris_ecef.ROTATIONAL_VELOCITY_PHI);
-                processingEphemeris.setAccelerationX(ephemeris_ecef.ACCELERATION_X);
-                processingEphemeris.setAccelerationY(ephemeris_ecef.ACCELERATION_Y);
-                processingEphemeris.setAccelerationZ(ephemeris_ecef.ACCELERATION_Z);
-                processingEphemeris.setRotationalAccelerationAlpha(ephemeris_ecef.ROTATIONAL_ACCELERATION_ALPHA);
-                processingEphemeris.setRotationalAccelerationBeta(ephemeris_ecef.ROTATIONAL_ACCELERATION_BETA);
-                processingEphemeris.setRotationalAccelerationPhi(ephemeris_ecef.ROTATIONAL_ACCELERATION_PHI);
 
                 contextPacket->setEphemerisECEF(processingEphemeris);
             }
@@ -1010,16 +997,6 @@ int SinkVITA49_i::createIFContextPacket(BULKIO::PrecisionUTCTime t, int index) {
                 processingEphemerisRel.setVelocityX(ephemeris_relative.VELOCITY_X);
                 processingEphemerisRel.setVelocityY(ephemeris_relative.VELOCITY_Y);
                 processingEphemerisRel.setVelocityZ(ephemeris_relative.VELOCITY_Z);
-                // KNOWN BUG - ADJUNCT EPHEMERIS CLASS DOES NOT WORK AS EXPECTED
-                processingEphemerisRel.setRotationalVelocityAlpha(ephemeris_relative.ROTATIONAL_VELOCITY_ALPHA);
-                processingEphemerisRel.setRotationalVelocityBeta(ephemeris_relative.ROTATIONAL_VELOCITY_BETA);
-                processingEphemerisRel.setRotationalVelocityPhi(ephemeris_relative.ROTATIONAL_VELOCITY_PHI);
-                processingEphemerisRel.setAccelerationX(ephemeris_relative.ACCELERATION_X);
-                processingEphemerisRel.setAccelerationY(ephemeris_relative.ACCELERATION_Y);
-                processingEphemerisRel.setAccelerationZ(ephemeris_relative.ACCELERATION_Z);
-                processingEphemerisRel.setRotationalAccelerationAlpha(ephemeris_relative.ROTATIONAL_ACCELERATION_ALPHA);
-                processingEphemerisRel.setRotationalAccelerationBeta(ephemeris_relative.ROTATIONAL_ACCELERATION_BETA);
-                processingEphemerisRel.setRotationalAccelerationPhi(ephemeris_relative.ROTATIONAL_ACCELERATION_PHI);
                 delete time;
                 //contextPacket->setEphemerisRelative(processingEphemerisRel);
             }
