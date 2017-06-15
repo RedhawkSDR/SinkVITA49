@@ -82,15 +82,6 @@ package:el6-i386:rh2.0:
     arch: i686
   <<: *package
 
-package:el7:rh2.0:
-  variables:
-    latest_version: 2.0-nightly
-    release_version: $rh_20_release
-    short_version: '2.0'
-    dist: el7
-    arch: x86_64
-  <<: *package
-
 package:el6:rh2.1:
   variables:
     latest_version: 2.1-nightly
@@ -136,15 +127,6 @@ test:el6-i386:rh2.0:
   only:
     - branches
 
-test:el7:rh2.0:
-  variables:
-    redhawk_version: 2.0-nightly
-    dist: el7
-    arch: x86_64
-  <<: *test
-  only:
-    - branches
-
 test:el6:rh2.1:
   variables:
     redhawk_version: 2.1-nightly
@@ -186,15 +168,6 @@ test:release:el6-i386:rh2.0:
     redhawk_version: $rh_20_release
     dist: el6
     arch: i686
-  <<: *test
-  only:
-    - tags
-
-test:release:el7:rh2.0:
-  variables:
-    redhawk_version: $rh_20_release
-    dist: el7
-    arch: x86_64
   <<: *test
   only:
     - tags
