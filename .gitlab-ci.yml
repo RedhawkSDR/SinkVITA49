@@ -33,7 +33,7 @@ variables:
                                                --build-arg "other_repos=$other_repos" .
     - id=$(docker create $name:$safe_ref-$dist-$arch-rh${safe_version})
     - docker cp $id:/root/rpmbuild/RPMS/ output/
-    - docker rm -f $id
+    - docker rm -f $id || true
   artifacts:
     paths:
       - output/*/*.rpm
