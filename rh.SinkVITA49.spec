@@ -94,3 +94,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/dom/components/rh/SinkVITA49/SinkVITA49.spd.xml
 %{_prefix}/dom/components/rh/SinkVITA49/cpp
 
+%changelog
+* Wed Jun 21 2017 Ryan Bauman <rbauman@lgsinnovations.com> - 3.0.2-4
+- Mass rebuild for REDHAWK 2.1.1
+
