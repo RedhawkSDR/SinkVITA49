@@ -4,14 +4,7 @@ variables:
   rh_20_release: '2.0.6'
   rh_21_release: '2.1.1'
 
-.package: &package
-  image: ${docker_registry}utils/docker:latest-rpm
-  stage: build
-  tags:
-    - dind
-  script:
-    # Ensure newest version of FROM image
-    - docker pull ${docker_registry}rpmbuild:${dist}-${arch}-onbuild
+before_script:
     # Use RPM release from specfile if this is a tag
     - safe_version=$(echo ${short_version} | tr -d -)
     - safe_ref=$(echo ${CI_COMMIT_REF_NAME} | tr -d /| tr '[:upper:]' '[:lower:]')
@@ -26,7 +19,15 @@ variables:
       fi
     - redhawk_repo=$yum_repo_url/redhawk-core-framework/$redhawk_version/$dist/$arch
     - vita49_repo=$yum_repo_url/redhawk-sharedlibs/VITA49/$vita49_version/rh${safe_version}/$dist/$arch
-    - docker pull ${docker_registry}rpmbuild:$dist-$arch-onbuild
+
+.package: &package
+  image: ${docker_registry}utils/docker:latest-rpm
+  stage: build
+  tags:
+    - dind
+  script:
+    # Ensure newest version of FROM image
+    - docker pull ${docker_registry}rpmbuild:${dist}-${arch}-onbuild
     - printf "FROM ${docker_registry}rpmbuild:$dist-$arch-onbuild" > Dockerfile
     - name=$(echo $CI_PROJECT_NAME| tr '[:upper:]' '[:lower:]')
     - docker build -t $name:$safe_ref-$dist-$arch-rh${safe_version} --build-arg "project=$CI_PROJECT_NAME"
@@ -43,12 +44,17 @@ variables:
     expire_in: 2 days
 
 .test: &test
-  image: ${docker_registry}redhawk/redhawk:$redhawk_version-$dist-$arch
+  image: ${docker_registry}redhawk/buildenv:$dist-$arch
   stage: test
   dependencies: []
   script:
     - . /usr/local/redhawk/python-virtualenv/bin/activate
-    - yum-builddep -y ${namespace}$CI_PROJECT_NAME.spec
+    - safe_version=$(echo ${short_version} | tr -d -)
+    - yum-config-manager --add-repo $yum_repo_url/redhawk-core-framework/$redhawk_version/$dist/$arch
+    - yum-config-manager --add-repo $yum_repo_url/redhawk-sharedlibs/VITA49/$vita49_version/rh${safe_version}/$dist/$arch
+    - touch /var/lib/rpm/* && yum-builddep --nogpgcheck -y ${namespace}$CI_PROJECT_NAME.spec
+    - source /etc/profile.d/redhawk.sh
+    - export SDRROOT=/var/redhawk/sdr
     - if [ -d cpp ] && [ "${dist}" == "el7" ]; then
         export CXXFLAGS='-g -Og -fprofile-arcs -ftest-coverage' V=1;
       fi
@@ -70,8 +76,8 @@ variables:
 
 package:el6:rh2.0:
   variables:
-    latest_version: 2.0-nightly
     release_version: $rh_20_release
+    latest_version: 2.0-nightly
     short_version: '2.0'
     dist: el6
     arch: x86_64
@@ -79,8 +85,8 @@ package:el6:rh2.0:
 
 package:el6-i386:rh2.0:
   variables:
-    latest_version: 2.0-nightly
     release_version: $rh_20_release
+    latest_version: 2.0-nightly
     short_version: '2.0'
     dist: el6
     arch: i686
@@ -88,8 +94,8 @@ package:el6-i386:rh2.0:
 
 package:el7:rh2.0:
   variables:
-    latest_version: 2.0-nightly
     release_version: $rh_20_release
+    latest_version: 2.0-nightly
     short_version: '2.0'
     dist: el7
     arch: x86_64
@@ -97,8 +103,8 @@ package:el7:rh2.0:
 
 package:el6:rh2.1:
   variables:
-    latest_version: 2.1-nightly
     release_version: $rh_21_release
+    latest_version: 2.1-nightly
     short_version: '2.1'
     dist: el6
     arch: x86_64
@@ -106,8 +112,8 @@ package:el6:rh2.1:
 
 package:el6-i386:rh2.1:
   variables:
-    latest_version: 2.1-nightly
     release_version: $rh_21_release
+    latest_version: 2.1-nightly
     short_version: '2.1'
     dist: el6
     arch: i686
@@ -115,8 +121,8 @@ package:el6-i386:rh2.1:
 
 package:el7:rh2.1:
   variables:
-    latest_version: 2.1-nightly
     release_version: $rh_21_release
+    latest_version: 2.1-nightly
     short_version: '2.1'
     dist: el7
     arch: x86_64
@@ -124,116 +130,64 @@ package:el7:rh2.1:
 
 test:el6:rh2.0:
   variables:
-    redhawk_version: 2.0-nightly
+    release_version: $rh_20_release
+    latest_version: 2.0-nightly
+    short_version: '2.0'
     dist: el6
     arch: x86_64
   <<: *test
-  only:
-    - branches
 
 test:el6-i386:rh2.0:
   variables:
-    redhawk_version: 2.0-nightly
+    release_version: $rh_20_release
+    latest_version: 2.0-nightly
+    short_version: '2.0'
     dist: el6
     arch: i686
   <<: *test
-  only:
-    - branches
 
 test:el7:rh2.0:
   variables:
-    redhawk_version: 2.0-nightly
+    release_version: $rh_20_release
+    latest_version: 2.0-nightly
+    short_version: '2.0'
     dist: el7
     arch: x86_64
   <<: *test
-  only:
-    - branches
 
 test:el6:rh2.1:
   variables:
-    redhawk_version: 2.1-nightly
+    release_version: $rh_21_release
+    latest_version: 2.1-nightly
+    short_version: '2.1'
     dist: el6
     arch: x86_64
   <<: *test
-  only:
-    - branches
 
 test:el6-i386:rh2.1:
   variables:
-    redhawk_version: 2.1-nightly
+    release_version: $rh_21_release
+    latest_version: 2.1-nightly
+    short_version: '2.1'
     dist: el6
     arch: i686
   <<: *test
-  only:
-    - branches
 
 test:el7:rh2.1:
   variables:
-    redhawk_version: 2.1-nightly
+    release_version: $rh_21_release
+    latest_version: 2.1-nightly
+    short_version: '2.1'
     dist: el7
     arch: x86_64
   <<: *test
-  only:
-    - branches
-
-test:release:el6:rh2.0:
-  variables:
-    redhawk_version: $rh_20_release
-    dist: el6
-    arch: x86_64
-  <<: *test
-  only:
-    - tags
-
-test:release:el6-i386:rh2.0:
-  variables:
-    redhawk_version: $rh_20_release
-    dist: el6
-    arch: i686
-  <<: *test
-  only:
-    - tags
-
-test:release:el7:rh2.0:
-  variables:
-    redhawk_version: $rh_20_release
-    dist: el7
-    arch: x86_64
-  <<: *test
-  only:
-    - tags
-
-test:release:el6:rh2.1:
-  variables:
-    redhawk_version: $rh_21_release
-    dist: el6
-    arch: x86_64
-  <<: *test
-  only:
-    - tags
-
-test:release:el6-i386:rh2.1:
-  variables:
-    redhawk_version: $rh_21_release
-    dist: el6
-    arch: i686
-  <<: *test
-  only:
-    - tags
-
-test:release:el7:rh2.1:
-  variables:
-    redhawk_version: $rh_21_release
-    dist: el7
-    arch: x86_64
-  <<: *test
-  only:
-    - tags
 
 deploy:
   image: centos:7
   stage: deploy
   dependencies: []
+  before_script:
+    - echo "Deploying to $jenkins_url/job/$CI_PROJECT_NAMESPACE/job/$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME"
   script:
     - if [ -n "$jenkins_url" ]; then
         curl --insecure -X POST $jenkins_url/job/$CI_PROJECT_NAMESPACE/job/$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME/buildWithParameters?pipeline_id=$CI_PIPELINE_ID --user $jenkins_user:$jenkins_api_token;
@@ -245,6 +199,8 @@ deploy:release:
   image: centos:7
   stage: deploy
   dependencies: []
+  before_script:
+    - echo "Deploying to $jenkins_url/job/$CI_PROJECT_NAMESPACE/job/$CI_PROJECT_NAME-$CI_COMMIT_REF_NAME"
   #Note, must set set associated redhawk_release
   script:
     - if [ -n "$jenkins_url" ]; then
